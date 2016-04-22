@@ -1,0 +1,2494 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "import pyspark as ps"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "sc = ps.SparkContext('local')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "u'local'"
+      ]
+     },
+     "execution_count": 3,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#checking for single core\n",
+    "sc.master"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "#if import ipdb does not work use pip on commandline\n",
+    "import os,ipdb"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "cwd = os.getcwd()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "'/home/spark'"
+      ]
+     },
+     "execution_count": 7,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "cwd"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "#read csv and doing EDA on data from csv\n",
+    "rdd = sc.textFile('file://' + cwd + '/Downloads/opendata_projects.csv')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "878853"
+      ]
+     },
+     "execution_count": 9,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#total number of records\n",
+    "rdd.count()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "#taking header\n",
+    "header = rdd.first()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "#rdd with no header\n",
+    "rdd_no_header = rdd.filter(lambda row:row != header)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "u'\"7342bd01a2a7725ce033a179d22e382d\",\"5c43ef5eac0f5857c266baa1ccfa3d3f\",\"9e72d6f2f1e9367b578b6479aa5852b7\",\"360009702803\",\"40.688454000000000\",\"-73.910432000000000\",\"Brooklyn\",\"NY\",\"11207\",\"urban\",\"New York City Dept Of Ed\",\"Kings (Brooklyn)\",\"f\",\"t\",\"f\",\"f\",\"f\",\"f\",\"Mr.\",\"f\",\"f\",\"Other\",\"Applied Learning\",\"\",\"\",\"Supplies\",\"highest poverty\",\"Grades 6-8\",\"\",\"\",\"\",\"\",\"229.00\",\"279.27\",\"0\",\"251\",\"1\",\"f\",\"f\",\"completed\",\"2002-09-13 00:00:00\",\"2002-09-23 00:00:00\",\"2003-01-27 00:00:00\",\"2003-12-31 00:00:00\"'"
+      ]
+     },
+     "execution_count": 12,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "rdd_no_header.first()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "#creating list of columns\n",
+    "header_list = header.split(',')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "#sanity check for records to have correct number of columns\n",
+    "columncount = len(header_list)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "44"
+      ]
+     },
+     "execution_count": 15,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "columncount"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "rdd_csv = rdd_no_header.map(lambda row: row.split(','))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 17,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "22"
+      ]
+     },
+     "execution_count": 17,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "rdd_csv.map(lambda row: len(row) != columncount).sum()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 18,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "878830"
+      ]
+     },
+     "execution_count": 18,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "rdd_csv.map(lambda row: len(row) == columncount).sum()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 19,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "#trying to reason why the data has incorrect number of columns in some rows and fixing them\n",
+    "import pprint\n",
+    "\n",
+    "class RowSplitException(Exception):\n",
+    "    pass\n",
+    "\n",
+    "def throw_exception(row):\n",
+    "    if len(row) != columncount:\n",
+    "        row_zip = zip(header_list,row)\n",
+    "        message = pprint.pformat(row_zip)\n",
+    "        raise RowSplitException(message)\n",
+    "    else:\n",
+    "        pass"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 25,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "ename": "Py4JJavaError",
+     "evalue": "An error occurred while calling z:org.apache.spark.api.python.PythonRDD.collectAndServe.\n: org.apache.spark.SparkException: Job aborted due to stage failure: Task 1 in stage 6.0 failed 1 times, most recent failure: Lost task 1.0 in stage 6.0 (TID 35, localhost): org.apache.spark.api.python.PythonException: Traceback (most recent call last):\n  File \"/opt/spark/python/lib/pyspark.zip/pyspark/worker.py\", line 111, in main\n    process()\n  File \"/opt/spark/python/lib/pyspark.zip/pyspark/worker.py\", line 106, in process\n    serializer.dump_stream(func(split_index, iterator), outfile)\n  File \"/opt/spark/python/pyspark/rdd.py\", line 2346, in pipeline_func\n    return func(split, prev_func(split, iterator))\n  File \"/opt/spark/python/pyspark/rdd.py\", line 2346, in pipeline_func\n    return func(split, prev_func(split, iterator))\n  File \"/opt/spark/python/pyspark/rdd.py\", line 2346, in pipeline_func\n    return func(split, prev_func(split, iterator))\n  File \"/opt/spark/python/pyspark/rdd.py\", line 2346, in pipeline_func\n    return func(split, prev_func(split, iterator))\n  File \"/opt/spark/python/pyspark/rdd.py\", line 317, in func\n    return f(iterator)\n  File \"/opt/spark/python/pyspark/rdd.py\", line 745, in processPartition\n    f(x)\n  File \"<ipython-input-24-567cd901d26a>\", line 10, in throw_exception\nRowSplitException: [(u'_projectid', u'\"cf841ea7e1bda85b3426465238577311\"'),\n (u'_teacher_acctid', u'\"e4e5065e2512062b663cf799d6a8d95f\"'),\n (u'_schoolid', u'\"2e472567a2c3890e536302e1461c3a3e\"'),\n (u'school_ncesid', u'\"\"'),\n (u'school_latitude', u'\"40.714550167322159\"'),\n (u'school_longitude', u'\"-74.007124900817871\"'),\n (u'school_city', u'\"Bronx\\\\'),\n (u'school_state', u' N.Y.\"'),\n (u'school_zip', u'\"NY\"'),\n (u'school_metro', u'\"10473\"'),\n (u'school_district', u'\"\"'),\n (u'school_county', u'\"Leadership Learning Support Organization\"'),\n (u'school_charter', u'\"Bronx\"'),\n (u'school_magnet', u'\"f\"'),\n (u'school_year_round', u'\"f\"'),\n (u'school_nlns', u'\"f\"'),\n (u'school_kipp', u'\"f\"'),\n (u'school_charter_ready_promise', u'\"f\"'),\n (u'teacher_prefix', u'\"f\"'),\n (u'teacher_teach_for_america', u'\"Mrs.\"'),\n (u'teacher_ny_teaching_fellow', u'\"f\"'),\n (u'primary_focus_subject', u'\"f\"'),\n (u'primary_focus_area', u'\"Literacy\"'),\n (u'secondary_focus_subject', u'\"Literacy & Language\"'),\n (u'secondary_focus_area', u'\"\"'),\n (u'resource_type', u'\"\"'),\n (u'poverty_level', u'\"Other\"'),\n (u'grade_level', u'\"highest poverty\"'),\n (u'vendor_shipping_charges', u'\"Grades PreK-2\"'),\n (u'sales_tax', u'\"20.88\"'),\n (u'payment_processing_charges', u'\"0.00\"'),\n (u'fulfillment_labor_materials', u'\"5.22\"'),\n (u'total_price_excluding_optional_support', u'\"17.00\"'),\n (u'total_price_including_optional_support', u'\"252.00\"'),\n (u'students_reached', u'\"307.32\"'),\n (u'total_donations', u'\"22\"'),\n (u'num_donors', u'\"0\"'),\n (u'eligible_double_your_impact_match', u'\"0\"'),\n (u'eligible_almost_home_match', u'\"f\"'),\n (u'funding_status', u'\"f\"'),\n (u'date_posted', u'\"expired\"'),\n (u'date_completed', u'\"2008-01-31 00:00:00\"'),\n (u'date_thank_you_packet_mailed', u'\"\"'),\n (u'date_expiration', u'\"\"')]\n\n\tat org.apache.spark.api.python.PythonRunner$$anon$1.read(PythonRDD.scala:166)\n\tat org.apache.spark.api.python.PythonRunner$$anon$1.<init>(PythonRDD.scala:207)\n\tat org.apache.spark.api.python.PythonRunner.compute(PythonRDD.scala:125)\n\tat org.apache.spark.api.python.PythonRDD.compute(PythonRDD.scala:70)\n\tat org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:306)\n\tat org.apache.spark.rdd.RDD.iterator(RDD.scala:270)\n\tat org.apache.spark.scheduler.ResultTask.runTask(ResultTask.scala:66)\n\tat org.apache.spark.scheduler.Task.run(Task.scala:89)\n\tat org.apache.spark.executor.Executor$TaskRunner.run(Executor.scala:214)\n\tat java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)\n\tat java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)\n\tat java.lang.Thread.run(Thread.java:745)\n\nDriver stacktrace:\n\tat org.apache.spark.scheduler.DAGScheduler.org$apache$spark$scheduler$DAGScheduler$$failJobAndIndependentStages(DAGScheduler.scala:1431)\n\tat org.apache.spark.scheduler.DAGScheduler$$anonfun$abortStage$1.apply(DAGScheduler.scala:1419)\n\tat org.apache.spark.scheduler.DAGScheduler$$anonfun$abortStage$1.apply(DAGScheduler.scala:1418)\n\tat scala.collection.mutable.ResizableArray$class.foreach(ResizableArray.scala:59)\n\tat scala.collection.mutable.ArrayBuffer.foreach(ArrayBuffer.scala:47)\n\tat org.apache.spark.scheduler.DAGScheduler.abortStage(DAGScheduler.scala:1418)\n\tat org.apache.spark.scheduler.DAGScheduler$$anonfun$handleTaskSetFailed$1.apply(DAGScheduler.scala:799)\n\tat org.apache.spark.scheduler.DAGScheduler$$anonfun$handleTaskSetFailed$1.apply(DAGScheduler.scala:799)\n\tat scala.Option.foreach(Option.scala:236)\n\tat org.apache.spark.scheduler.DAGScheduler.handleTaskSetFailed(DAGScheduler.scala:799)\n\tat org.apache.spark.scheduler.DAGSchedulerEventProcessLoop.doOnReceive(DAGScheduler.scala:1640)\n\tat org.apache.spark.scheduler.DAGSchedulerEventProcessLoop.onReceive(DAGScheduler.scala:1599)\n\tat org.apache.spark.scheduler.DAGSchedulerEventProcessLoop.onReceive(DAGScheduler.scala:1588)\n\tat org.apache.spark.util.EventLoop$$anon$1.run(EventLoop.scala:48)\n\tat org.apache.spark.scheduler.DAGScheduler.runJob(DAGScheduler.scala:620)\n\tat org.apache.spark.SparkContext.runJob(SparkContext.scala:1832)\n\tat org.apache.spark.SparkContext.runJob(SparkContext.scala:1845)\n\tat org.apache.spark.SparkContext.runJob(SparkContext.scala:1858)\n\tat org.apache.spark.SparkContext.runJob(SparkContext.scala:1929)\n\tat org.apache.spark.rdd.RDD$$anonfun$collect$1.apply(RDD.scala:927)\n\tat org.apache.spark.rdd.RDDOperationScope$.withScope(RDDOperationScope.scala:150)\n\tat org.apache.spark.rdd.RDDOperationScope$.withScope(RDDOperationScope.scala:111)\n\tat org.apache.spark.rdd.RDD.withScope(RDD.scala:316)\n\tat org.apache.spark.rdd.RDD.collect(RDD.scala:926)\n\tat org.apache.spark.api.python.PythonRDD$.collectAndServe(PythonRDD.scala:405)\n\tat org.apache.spark.api.python.PythonRDD.collectAndServe(PythonRDD.scala)\n\tat sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\n\tat sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)\n\tat sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)\n\tat java.lang.reflect.Method.invoke(Method.java:498)\n\tat py4j.reflection.MethodInvoker.invoke(MethodInvoker.java:231)\n\tat py4j.reflection.ReflectionEngine.invoke(ReflectionEngine.java:381)\n\tat py4j.Gateway.invoke(Gateway.java:259)\n\tat py4j.commands.AbstractCommand.invokeMethod(AbstractCommand.java:133)\n\tat py4j.commands.CallCommand.execute(CallCommand.java:79)\n\tat py4j.GatewayConnection.run(GatewayConnection.java:209)\n\tat java.lang.Thread.run(Thread.java:745)\nCaused by: org.apache.spark.api.python.PythonException: Traceback (most recent call last):\n  File \"/opt/spark/python/lib/pyspark.zip/pyspark/worker.py\", line 111, in main\n    process()\n  File \"/opt/spark/python/lib/pyspark.zip/pyspark/worker.py\", line 106, in process\n    serializer.dump_stream(func(split_index, iterator), outfile)\n  File \"/opt/spark/python/pyspark/rdd.py\", line 2346, in pipeline_func\n    return func(split, prev_func(split, iterator))\n  File \"/opt/spark/python/pyspark/rdd.py\", line 2346, in pipeline_func\n    return func(split, prev_func(split, iterator))\n  File \"/opt/spark/python/pyspark/rdd.py\", line 2346, in pipeline_func\n    return func(split, prev_func(split, iterator))\n  File \"/opt/spark/python/pyspark/rdd.py\", line 2346, in pipeline_func\n    return func(split, prev_func(split, iterator))\n  File \"/opt/spark/python/pyspark/rdd.py\", line 317, in func\n    return f(iterator)\n  File \"/opt/spark/python/pyspark/rdd.py\", line 745, in processPartition\n    f(x)\n  File \"<ipython-input-24-567cd901d26a>\", line 10, in throw_exception\nRowSplitException: [(u'_projectid', u'\"cf841ea7e1bda85b3426465238577311\"'),\n (u'_teacher_acctid', u'\"e4e5065e2512062b663cf799d6a8d95f\"'),\n (u'_schoolid', u'\"2e472567a2c3890e536302e1461c3a3e\"'),\n (u'school_ncesid', u'\"\"'),\n (u'school_latitude', u'\"40.714550167322159\"'),\n (u'school_longitude', u'\"-74.007124900817871\"'),\n (u'school_city', u'\"Bronx\\\\'),\n (u'school_state', u' N.Y.\"'),\n (u'school_zip', u'\"NY\"'),\n (u'school_metro', u'\"10473\"'),\n (u'school_district', u'\"\"'),\n (u'school_county', u'\"Leadership Learning Support Organization\"'),\n (u'school_charter', u'\"Bronx\"'),\n (u'school_magnet', u'\"f\"'),\n (u'school_year_round', u'\"f\"'),\n (u'school_nlns', u'\"f\"'),\n (u'school_kipp', u'\"f\"'),\n (u'school_charter_ready_promise', u'\"f\"'),\n (u'teacher_prefix', u'\"f\"'),\n (u'teacher_teach_for_america', u'\"Mrs.\"'),\n (u'teacher_ny_teaching_fellow', u'\"f\"'),\n (u'primary_focus_subject', u'\"f\"'),\n (u'primary_focus_area', u'\"Literacy\"'),\n (u'secondary_focus_subject', u'\"Literacy & Language\"'),\n (u'secondary_focus_area', u'\"\"'),\n (u'resource_type', u'\"\"'),\n (u'poverty_level', u'\"Other\"'),\n (u'grade_level', u'\"highest poverty\"'),\n (u'vendor_shipping_charges', u'\"Grades PreK-2\"'),\n (u'sales_tax', u'\"20.88\"'),\n (u'payment_processing_charges', u'\"0.00\"'),\n (u'fulfillment_labor_materials', u'\"5.22\"'),\n (u'total_price_excluding_optional_support', u'\"17.00\"'),\n (u'total_price_including_optional_support', u'\"252.00\"'),\n (u'students_reached', u'\"307.32\"'),\n (u'total_donations', u'\"22\"'),\n (u'num_donors', u'\"0\"'),\n (u'eligible_double_your_impact_match', u'\"0\"'),\n (u'eligible_almost_home_match', u'\"f\"'),\n (u'funding_status', u'\"f\"'),\n (u'date_posted', u'\"expired\"'),\n (u'date_completed', u'\"2008-01-31 00:00:00\"'),\n (u'date_thank_you_packet_mailed', u'\"\"'),\n (u'date_expiration', u'\"\"')]\n\n\tat org.apache.spark.api.python.PythonRunner$$anon$1.read(PythonRDD.scala:166)\n\tat org.apache.spark.api.python.PythonRunner$$anon$1.<init>(PythonRDD.scala:207)\n\tat org.apache.spark.api.python.PythonRunner.compute(PythonRDD.scala:125)\n\tat org.apache.spark.api.python.PythonRDD.compute(PythonRDD.scala:70)\n\tat org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:306)\n\tat org.apache.spark.rdd.RDD.iterator(RDD.scala:270)\n\tat org.apache.spark.scheduler.ResultTask.runTask(ResultTask.scala:66)\n\tat org.apache.spark.scheduler.Task.run(Task.scala:89)\n\tat org.apache.spark.executor.Executor$TaskRunner.run(Executor.scala:214)\n\tat java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)\n\tat java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)\n\t... 1 more\n",
+     "output_type": "error",
+     "traceback": [
+      "\u001b[1;31m---------------------------------------------------------------------------\u001b[0m",
+      "\u001b[1;31mPy4JJavaError\u001b[0m                             Traceback (most recent call last)",
+      "\u001b[1;32m<ipython-input-25-564a2d87899e>\u001b[0m in \u001b[0;36m<module>\u001b[1;34m()\u001b[0m\n\u001b[1;32m----> 1\u001b[1;33m \u001b[0mrdd_csv\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mforeach\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mthrow_exception\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0m",
+      "\u001b[1;32m/opt/spark/python/pyspark/rdd.pyc\u001b[0m in \u001b[0;36mforeach\u001b[1;34m(self, f)\u001b[0m\n\u001b[0;32m    745\u001b[0m                 \u001b[0mf\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mx\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m    746\u001b[0m             \u001b[1;32mreturn\u001b[0m \u001b[0miter\u001b[0m\u001b[1;33m(\u001b[0m\u001b[1;33m[\u001b[0m\u001b[1;33m]\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m--> 747\u001b[1;33m         \u001b[0mself\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mmapPartitions\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mprocessPartition\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mcount\u001b[0m\u001b[1;33m(\u001b[0m\u001b[1;33m)\u001b[0m  \u001b[1;31m# Force evaluation\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0m\u001b[0;32m    748\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m    749\u001b[0m     \u001b[1;32mdef\u001b[0m \u001b[0mforeachPartition\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mself\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0mf\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m:\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;32m/opt/spark/python/pyspark/rdd.pyc\u001b[0m in \u001b[0;36mcount\u001b[1;34m(self)\u001b[0m\n\u001b[0;32m   1002\u001b[0m         \u001b[1;36m3\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m   1003\u001b[0m         \"\"\"\n\u001b[1;32m-> 1004\u001b[1;33m         \u001b[1;32mreturn\u001b[0m \u001b[0mself\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mmapPartitions\u001b[0m\u001b[1;33m(\u001b[0m\u001b[1;32mlambda\u001b[0m \u001b[0mi\u001b[0m\u001b[1;33m:\u001b[0m \u001b[1;33m[\u001b[0m\u001b[0msum\u001b[0m\u001b[1;33m(\u001b[0m\u001b[1;36m1\u001b[0m \u001b[1;32mfor\u001b[0m \u001b[0m_\u001b[0m \u001b[1;32min\u001b[0m \u001b[0mi\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m]\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0msum\u001b[0m\u001b[1;33m(\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0m\u001b[0;32m   1005\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m   1006\u001b[0m     \u001b[1;32mdef\u001b[0m \u001b[0mstats\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mself\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m:\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;32m/opt/spark/python/pyspark/rdd.pyc\u001b[0m in \u001b[0;36msum\u001b[1;34m(self)\u001b[0m\n\u001b[0;32m    993\u001b[0m         \u001b[1;36m6.0\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m    994\u001b[0m         \"\"\"\n\u001b[1;32m--> 995\u001b[1;33m         \u001b[1;32mreturn\u001b[0m \u001b[0mself\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mmapPartitions\u001b[0m\u001b[1;33m(\u001b[0m\u001b[1;32mlambda\u001b[0m \u001b[0mx\u001b[0m\u001b[1;33m:\u001b[0m \u001b[1;33m[\u001b[0m\u001b[0msum\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mx\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m]\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mfold\u001b[0m\u001b[1;33m(\u001b[0m\u001b[1;36m0\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0moperator\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0madd\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0m\u001b[0;32m    996\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m    997\u001b[0m     \u001b[1;32mdef\u001b[0m \u001b[0mcount\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mself\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m:\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;32m/opt/spark/python/pyspark/rdd.pyc\u001b[0m in \u001b[0;36mfold\u001b[1;34m(self, zeroValue, op)\u001b[0m\n\u001b[0;32m    867\u001b[0m         \u001b[1;31m# zeroValue provided to each partition is unique from the one provided\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m    868\u001b[0m         \u001b[1;31m# to the final reduce call\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m--> 869\u001b[1;33m         \u001b[0mvals\u001b[0m \u001b[1;33m=\u001b[0m \u001b[0mself\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mmapPartitions\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mfunc\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mcollect\u001b[0m\u001b[1;33m(\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0m\u001b[0;32m    870\u001b[0m         \u001b[1;32mreturn\u001b[0m \u001b[0mreduce\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mop\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0mvals\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0mzeroValue\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m    871\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;32m/opt/spark/python/pyspark/rdd.pyc\u001b[0m in \u001b[0;36mcollect\u001b[1;34m(self)\u001b[0m\n\u001b[0;32m    769\u001b[0m         \"\"\"\n\u001b[0;32m    770\u001b[0m         \u001b[1;32mwith\u001b[0m \u001b[0mSCCallSiteSync\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mself\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mcontext\u001b[0m\u001b[1;33m)\u001b[0m \u001b[1;32mas\u001b[0m \u001b[0mcss\u001b[0m\u001b[1;33m:\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m--> 771\u001b[1;33m             \u001b[0mport\u001b[0m \u001b[1;33m=\u001b[0m \u001b[0mself\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mctx\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0m_jvm\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mPythonRDD\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mcollectAndServe\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mself\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0m_jrdd\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mrdd\u001b[0m\u001b[1;33m(\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0m\u001b[0;32m    772\u001b[0m         \u001b[1;32mreturn\u001b[0m \u001b[0mlist\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0m_load_from_socket\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mport\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0mself\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0m_jrdd_deserializer\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m    773\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;32m/home/spark/anaconda2/lib/python2.7/site-packages/py4j/java_gateway.pyc\u001b[0m in \u001b[0;36m__call__\u001b[1;34m(self, *args)\u001b[0m\n\u001b[0;32m    834\u001b[0m         \u001b[0manswer\u001b[0m \u001b[1;33m=\u001b[0m \u001b[0mself\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mgateway_client\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0msend_command\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mcommand\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m    835\u001b[0m         return_value = get_return_value(\n\u001b[1;32m--> 836\u001b[1;33m             answer, self.gateway_client, self.target_id, self.name)\n\u001b[0m\u001b[0;32m    837\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m    838\u001b[0m         \u001b[1;32mfor\u001b[0m \u001b[0mtemp_arg\u001b[0m \u001b[1;32min\u001b[0m \u001b[0mtemp_args\u001b[0m\u001b[1;33m:\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;32m/home/spark/anaconda2/lib/python2.7/site-packages/py4j/protocol.pyc\u001b[0m in \u001b[0;36mget_return_value\u001b[1;34m(answer, gateway_client, target_id, name)\u001b[0m\n\u001b[0;32m    308\u001b[0m                 raise Py4JJavaError(\n\u001b[0;32m    309\u001b[0m                     \u001b[1;34m\"An error occurred while calling {0}{1}{2}.\\n\"\u001b[0m\u001b[1;33m.\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m--> 310\u001b[1;33m                     format(target_id, \".\", name), value)\n\u001b[0m\u001b[0;32m    311\u001b[0m             \u001b[1;32melse\u001b[0m\u001b[1;33m:\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m    312\u001b[0m                 raise Py4JError(\n",
+      "\u001b[1;31mPy4JJavaError\u001b[0m: An error occurred while calling z:org.apache.spark.api.python.PythonRDD.collectAndServe.\n: org.apache.spark.SparkException: Job aborted due to stage failure: Task 1 in stage 6.0 failed 1 times, most recent failure: Lost task 1.0 in stage 6.0 (TID 35, localhost): org.apache.spark.api.python.PythonException: Traceback (most recent call last):\n  File \"/opt/spark/python/lib/pyspark.zip/pyspark/worker.py\", line 111, in main\n    process()\n  File \"/opt/spark/python/lib/pyspark.zip/pyspark/worker.py\", line 106, in process\n    serializer.dump_stream(func(split_index, iterator), outfile)\n  File \"/opt/spark/python/pyspark/rdd.py\", line 2346, in pipeline_func\n    return func(split, prev_func(split, iterator))\n  File \"/opt/spark/python/pyspark/rdd.py\", line 2346, in pipeline_func\n    return func(split, prev_func(split, iterator))\n  File \"/opt/spark/python/pyspark/rdd.py\", line 2346, in pipeline_func\n    return func(split, prev_func(split, iterator))\n  File \"/opt/spark/python/pyspark/rdd.py\", line 2346, in pipeline_func\n    return func(split, prev_func(split, iterator))\n  File \"/opt/spark/python/pyspark/rdd.py\", line 317, in func\n    return f(iterator)\n  File \"/opt/spark/python/pyspark/rdd.py\", line 745, in processPartition\n    f(x)\n  File \"<ipython-input-24-567cd901d26a>\", line 10, in throw_exception\nRowSplitException: [(u'_projectid', u'\"cf841ea7e1bda85b3426465238577311\"'),\n (u'_teacher_acctid', u'\"e4e5065e2512062b663cf799d6a8d95f\"'),\n (u'_schoolid', u'\"2e472567a2c3890e536302e1461c3a3e\"'),\n (u'school_ncesid', u'\"\"'),\n (u'school_latitude', u'\"40.714550167322159\"'),\n (u'school_longitude', u'\"-74.007124900817871\"'),\n (u'school_city', u'\"Bronx\\\\'),\n (u'school_state', u' N.Y.\"'),\n (u'school_zip', u'\"NY\"'),\n (u'school_metro', u'\"10473\"'),\n (u'school_district', u'\"\"'),\n (u'school_county', u'\"Leadership Learning Support Organization\"'),\n (u'school_charter', u'\"Bronx\"'),\n (u'school_magnet', u'\"f\"'),\n (u'school_year_round', u'\"f\"'),\n (u'school_nlns', u'\"f\"'),\n (u'school_kipp', u'\"f\"'),\n (u'school_charter_ready_promise', u'\"f\"'),\n (u'teacher_prefix', u'\"f\"'),\n (u'teacher_teach_for_america', u'\"Mrs.\"'),\n (u'teacher_ny_teaching_fellow', u'\"f\"'),\n (u'primary_focus_subject', u'\"f\"'),\n (u'primary_focus_area', u'\"Literacy\"'),\n (u'secondary_focus_subject', u'\"Literacy & Language\"'),\n (u'secondary_focus_area', u'\"\"'),\n (u'resource_type', u'\"\"'),\n (u'poverty_level', u'\"Other\"'),\n (u'grade_level', u'\"highest poverty\"'),\n (u'vendor_shipping_charges', u'\"Grades PreK-2\"'),\n (u'sales_tax', u'\"20.88\"'),\n (u'payment_processing_charges', u'\"0.00\"'),\n (u'fulfillment_labor_materials', u'\"5.22\"'),\n (u'total_price_excluding_optional_support', u'\"17.00\"'),\n (u'total_price_including_optional_support', u'\"252.00\"'),\n (u'students_reached', u'\"307.32\"'),\n (u'total_donations', u'\"22\"'),\n (u'num_donors', u'\"0\"'),\n (u'eligible_double_your_impact_match', u'\"0\"'),\n (u'eligible_almost_home_match', u'\"f\"'),\n (u'funding_status', u'\"f\"'),\n (u'date_posted', u'\"expired\"'),\n (u'date_completed', u'\"2008-01-31 00:00:00\"'),\n (u'date_thank_you_packet_mailed', u'\"\"'),\n (u'date_expiration', u'\"\"')]\n\n\tat org.apache.spark.api.python.PythonRunner$$anon$1.read(PythonRDD.scala:166)\n\tat org.apache.spark.api.python.PythonRunner$$anon$1.<init>(PythonRDD.scala:207)\n\tat org.apache.spark.api.python.PythonRunner.compute(PythonRDD.scala:125)\n\tat org.apache.spark.api.python.PythonRDD.compute(PythonRDD.scala:70)\n\tat org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:306)\n\tat org.apache.spark.rdd.RDD.iterator(RDD.scala:270)\n\tat org.apache.spark.scheduler.ResultTask.runTask(ResultTask.scala:66)\n\tat org.apache.spark.scheduler.Task.run(Task.scala:89)\n\tat org.apache.spark.executor.Executor$TaskRunner.run(Executor.scala:214)\n\tat java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)\n\tat java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)\n\tat java.lang.Thread.run(Thread.java:745)\n\nDriver stacktrace:\n\tat org.apache.spark.scheduler.DAGScheduler.org$apache$spark$scheduler$DAGScheduler$$failJobAndIndependentStages(DAGScheduler.scala:1431)\n\tat org.apache.spark.scheduler.DAGScheduler$$anonfun$abortStage$1.apply(DAGScheduler.scala:1419)\n\tat org.apache.spark.scheduler.DAGScheduler$$anonfun$abortStage$1.apply(DAGScheduler.scala:1418)\n\tat scala.collection.mutable.ResizableArray$class.foreach(ResizableArray.scala:59)\n\tat scala.collection.mutable.ArrayBuffer.foreach(ArrayBuffer.scala:47)\n\tat org.apache.spark.scheduler.DAGScheduler.abortStage(DAGScheduler.scala:1418)\n\tat org.apache.spark.scheduler.DAGScheduler$$anonfun$handleTaskSetFailed$1.apply(DAGScheduler.scala:799)\n\tat org.apache.spark.scheduler.DAGScheduler$$anonfun$handleTaskSetFailed$1.apply(DAGScheduler.scala:799)\n\tat scala.Option.foreach(Option.scala:236)\n\tat org.apache.spark.scheduler.DAGScheduler.handleTaskSetFailed(DAGScheduler.scala:799)\n\tat org.apache.spark.scheduler.DAGSchedulerEventProcessLoop.doOnReceive(DAGScheduler.scala:1640)\n\tat org.apache.spark.scheduler.DAGSchedulerEventProcessLoop.onReceive(DAGScheduler.scala:1599)\n\tat org.apache.spark.scheduler.DAGSchedulerEventProcessLoop.onReceive(DAGScheduler.scala:1588)\n\tat org.apache.spark.util.EventLoop$$anon$1.run(EventLoop.scala:48)\n\tat org.apache.spark.scheduler.DAGScheduler.runJob(DAGScheduler.scala:620)\n\tat org.apache.spark.SparkContext.runJob(SparkContext.scala:1832)\n\tat org.apache.spark.SparkContext.runJob(SparkContext.scala:1845)\n\tat org.apache.spark.SparkContext.runJob(SparkContext.scala:1858)\n\tat org.apache.spark.SparkContext.runJob(SparkContext.scala:1929)\n\tat org.apache.spark.rdd.RDD$$anonfun$collect$1.apply(RDD.scala:927)\n\tat org.apache.spark.rdd.RDDOperationScope$.withScope(RDDOperationScope.scala:150)\n\tat org.apache.spark.rdd.RDDOperationScope$.withScope(RDDOperationScope.scala:111)\n\tat org.apache.spark.rdd.RDD.withScope(RDD.scala:316)\n\tat org.apache.spark.rdd.RDD.collect(RDD.scala:926)\n\tat org.apache.spark.api.python.PythonRDD$.collectAndServe(PythonRDD.scala:405)\n\tat org.apache.spark.api.python.PythonRDD.collectAndServe(PythonRDD.scala)\n\tat sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\n\tat sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)\n\tat sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)\n\tat java.lang.reflect.Method.invoke(Method.java:498)\n\tat py4j.reflection.MethodInvoker.invoke(MethodInvoker.java:231)\n\tat py4j.reflection.ReflectionEngine.invoke(ReflectionEngine.java:381)\n\tat py4j.Gateway.invoke(Gateway.java:259)\n\tat py4j.commands.AbstractCommand.invokeMethod(AbstractCommand.java:133)\n\tat py4j.commands.CallCommand.execute(CallCommand.java:79)\n\tat py4j.GatewayConnection.run(GatewayConnection.java:209)\n\tat java.lang.Thread.run(Thread.java:745)\nCaused by: org.apache.spark.api.python.PythonException: Traceback (most recent call last):\n  File \"/opt/spark/python/lib/pyspark.zip/pyspark/worker.py\", line 111, in main\n    process()\n  File \"/opt/spark/python/lib/pyspark.zip/pyspark/worker.py\", line 106, in process\n    serializer.dump_stream(func(split_index, iterator), outfile)\n  File \"/opt/spark/python/pyspark/rdd.py\", line 2346, in pipeline_func\n    return func(split, prev_func(split, iterator))\n  File \"/opt/spark/python/pyspark/rdd.py\", line 2346, in pipeline_func\n    return func(split, prev_func(split, iterator))\n  File \"/opt/spark/python/pyspark/rdd.py\", line 2346, in pipeline_func\n    return func(split, prev_func(split, iterator))\n  File \"/opt/spark/python/pyspark/rdd.py\", line 2346, in pipeline_func\n    return func(split, prev_func(split, iterator))\n  File \"/opt/spark/python/pyspark/rdd.py\", line 317, in func\n    return f(iterator)\n  File \"/opt/spark/python/pyspark/rdd.py\", line 745, in processPartition\n    f(x)\n  File \"<ipython-input-24-567cd901d26a>\", line 10, in throw_exception\nRowSplitException: [(u'_projectid', u'\"cf841ea7e1bda85b3426465238577311\"'),\n (u'_teacher_acctid', u'\"e4e5065e2512062b663cf799d6a8d95f\"'),\n (u'_schoolid', u'\"2e472567a2c3890e536302e1461c3a3e\"'),\n (u'school_ncesid', u'\"\"'),\n (u'school_latitude', u'\"40.714550167322159\"'),\n (u'school_longitude', u'\"-74.007124900817871\"'),\n (u'school_city', u'\"Bronx\\\\'),\n (u'school_state', u' N.Y.\"'),\n (u'school_zip', u'\"NY\"'),\n (u'school_metro', u'\"10473\"'),\n (u'school_district', u'\"\"'),\n (u'school_county', u'\"Leadership Learning Support Organization\"'),\n (u'school_charter', u'\"Bronx\"'),\n (u'school_magnet', u'\"f\"'),\n (u'school_year_round', u'\"f\"'),\n (u'school_nlns', u'\"f\"'),\n (u'school_kipp', u'\"f\"'),\n (u'school_charter_ready_promise', u'\"f\"'),\n (u'teacher_prefix', u'\"f\"'),\n (u'teacher_teach_for_america', u'\"Mrs.\"'),\n (u'teacher_ny_teaching_fellow', u'\"f\"'),\n (u'primary_focus_subject', u'\"f\"'),\n (u'primary_focus_area', u'\"Literacy\"'),\n (u'secondary_focus_subject', u'\"Literacy & Language\"'),\n (u'secondary_focus_area', u'\"\"'),\n (u'resource_type', u'\"\"'),\n (u'poverty_level', u'\"Other\"'),\n (u'grade_level', u'\"highest poverty\"'),\n (u'vendor_shipping_charges', u'\"Grades PreK-2\"'),\n (u'sales_tax', u'\"20.88\"'),\n (u'payment_processing_charges', u'\"0.00\"'),\n (u'fulfillment_labor_materials', u'\"5.22\"'),\n (u'total_price_excluding_optional_support', u'\"17.00\"'),\n (u'total_price_including_optional_support', u'\"252.00\"'),\n (u'students_reached', u'\"307.32\"'),\n (u'total_donations', u'\"22\"'),\n (u'num_donors', u'\"0\"'),\n (u'eligible_double_your_impact_match', u'\"0\"'),\n (u'eligible_almost_home_match', u'\"f\"'),\n (u'funding_status', u'\"f\"'),\n (u'date_posted', u'\"expired\"'),\n (u'date_completed', u'\"2008-01-31 00:00:00\"'),\n (u'date_thank_you_packet_mailed', u'\"\"'),\n (u'date_expiration', u'\"\"')]\n\n\tat org.apache.spark.api.python.PythonRunner$$anon$1.read(PythonRDD.scala:166)\n\tat org.apache.spark.api.python.PythonRunner$$anon$1.<init>(PythonRDD.scala:207)\n\tat org.apache.spark.api.python.PythonRunner.compute(PythonRDD.scala:125)\n\tat org.apache.spark.api.python.PythonRDD.compute(PythonRDD.scala:70)\n\tat org.apache.spark.rdd.RDD.computeOrReadCheckpoint(RDD.scala:306)\n\tat org.apache.spark.rdd.RDD.iterator(RDD.scala:270)\n\tat org.apache.spark.scheduler.ResultTask.runTask(ResultTask.scala:66)\n\tat org.apache.spark.scheduler.Task.run(Task.scala:89)\n\tat org.apache.spark.executor.Executor$TaskRunner.run(Executor.scala:214)\n\tat java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)\n\tat java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)\n\t... 1 more\n"
+     ]
+    }
+   ],
+   "source": [
+    "rdd_csv.foreach(throw_exception)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 20,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "#correcting string data for extra quotes\n",
+    "import csv\n",
+    "\n",
+    "rdd_csv_correct = rdd_no_header.map(lambda line: csv.reader([line]).next())"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 21,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Extra quotes parsed\n"
+     ]
+    }
+   ],
+   "source": [
+    "rdd_csv_correct.foreach(throw_exception)\n",
+    "print \"Extra quotes parsed\""
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 22,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "#no duplicates in original rdd\n",
+    "rdd_no_dups = rdd_csv_correct.map(lambda row: str(row)).distinct()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 23,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "878852"
+      ]
+     },
+     "execution_count": 23,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "rdd_no_dups.count()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 24,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "878852"
+      ]
+     },
+     "execution_count": 24,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "rdd_csv_correct.map(lambda row: str(row)).distinct().count()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 25,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "{u'_projectid': '7342bd01a2a7725ce033a179d22e382d',\n",
+       " u'_schoolid': '9e72d6f2f1e9367b578b6479aa5852b7',\n",
+       " u'_teacher_acctid': '5c43ef5eac0f5857c266baa1ccfa3d3f',\n",
+       " u'date_completed': '2002-09-23 00:00:00',\n",
+       " u'date_expiration': '2003-12-31 00:00:00',\n",
+       " u'date_posted': '2002-09-13 00:00:00',\n",
+       " u'date_thank_you_packet_mailed': '2003-01-27 00:00:00',\n",
+       " u'eligible_almost_home_match': 'f',\n",
+       " u'eligible_double_your_impact_match': 'f',\n",
+       " u'fulfillment_labor_materials': '',\n",
+       " u'funding_status': 'completed',\n",
+       " u'grade_level': 'Grades 6-8',\n",
+       " u'num_donors': '1',\n",
+       " u'payment_processing_charges': '',\n",
+       " u'poverty_level': 'highest poverty',\n",
+       " u'primary_focus_area': 'Applied Learning',\n",
+       " u'primary_focus_subject': 'Other',\n",
+       " u'resource_type': 'Supplies',\n",
+       " u'sales_tax': '',\n",
+       " u'school_charter': 'f',\n",
+       " u'school_charter_ready_promise': 'f',\n",
+       " u'school_city': 'Brooklyn',\n",
+       " u'school_county': 'Kings (Brooklyn)',\n",
+       " u'school_district': 'New York City Dept Of Ed',\n",
+       " u'school_kipp': 'f',\n",
+       " u'school_latitude': '40.688454000000000',\n",
+       " u'school_longitude': '-73.910432000000000',\n",
+       " u'school_magnet': 't',\n",
+       " u'school_metro': 'urban',\n",
+       " u'school_ncesid': '360009702803',\n",
+       " u'school_nlns': 'f',\n",
+       " u'school_state': 'NY',\n",
+       " u'school_year_round': 'f',\n",
+       " u'school_zip': '11207',\n",
+       " u'secondary_focus_area': '',\n",
+       " u'secondary_focus_subject': '',\n",
+       " u'students_reached': '0',\n",
+       " u'teacher_ny_teaching_fellow': 'f',\n",
+       " u'teacher_prefix': 'Mr.',\n",
+       " u'teacher_teach_for_america': 'f',\n",
+       " u'total_donations': '251',\n",
+       " u'total_price_excluding_optional_support': '229.00',\n",
+       " u'total_price_including_optional_support': '279.27',\n",
+       " u'vendor_shipping_charges': ''}"
+      ]
+     },
+     "execution_count": 25,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#creating a dictionary for easy column access and data type changes\n",
+    "rdd_dict = rdd_csv_correct.map(lambda row: dict(zip(header_list, row)))\n",
+    "rdd_dict.first()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 26,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "62303L"
+      ]
+     },
+     "execution_count": 26,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#unique values\n",
+    "rdd_dict.map(lambda row: row['_schoolid']).countApproxDistinct()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 27,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "64899"
+      ]
+     },
+     "execution_count": 27,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "rdd_dict.map(lambda row: row['_schoolid']).distinct().count()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 28,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "137190L"
+      ]
+     },
+     "execution_count": 28,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "rdd_dict.map(lambda row: row['total_price_excluding_optional_support']).countApproxDistinct()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 29,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "#missing column values\n",
+    "accum = sc.accumulator(0)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 30,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "from collections import Counter\n",
+    "\n",
+    "class CounterAccumulatorParam(ps.accumulators.AccumulatorParam):\n",
+    "    def zero(self, initialValue):\n",
+    "        return Counter()\n",
+    "    \n",
+    "    def addInPlace(self, v1, v2):\n",
+    "        v1 += v2\n",
+    "        return v1"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 31,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "accum = sc.accumulator(Counter(), CounterAccumulatorParam())"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 32,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "def count_null(record):\n",
+    "    global accum\n",
+    "    \n",
+    "    c = Counter()\n",
+    "    \n",
+    "    for key, value in record.items():\n",
+    "        if value =='':\n",
+    "            c[key] +=1\n",
+    "            \n",
+    "    accum.add(c)\n",
+    "        "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 33,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "rdd_dict.foreach(count_null)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 39,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "Counter({u'date_completed': 281856,\n",
+       "         u'date_expiration': 208,\n",
+       "         u'date_thank_you_packet_mailed': 334179,\n",
+       "         u'fulfillment_labor_materials': 35081,\n",
+       "         u'grade_level': 44,\n",
+       "         u'payment_processing_charges': 35081,\n",
+       "         u'primary_focus_area': 42,\n",
+       "         u'primary_focus_subject': 42,\n",
+       "         u'resource_type': 49,\n",
+       "         u'sales_tax': 35081,\n",
+       "         u'school_county': 16,\n",
+       "         u'school_district': 353,\n",
+       "         u'school_metro': 99298,\n",
+       "         u'school_ncesid': 49320,\n",
+       "         u'school_zip': 4,\n",
+       "         u'secondary_focus_area': 270162,\n",
+       "         u'secondary_focus_subject': 270162,\n",
+       "         u'students_reached': 152,\n",
+       "         u'teacher_prefix': 23,\n",
+       "         u'vendor_shipping_charges': 35081})"
+      ]
+     },
+     "execution_count": 39,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "accum.value"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 34,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "#type conversion\n",
+    "from pyspark.sql.types import *\n",
+    "from datetime import datetime"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 35,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "[('t', 12856), ('f', 865996)]"
+      ]
+     },
+     "execution_count": 35,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "rdd_dict.map(lambda d: (d['teacher_ny_teaching_fellow'], 1)).reduceByKey(lambda a, b: a + b).collect()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 36,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "def quote_strip(field):\n",
+    "    return field.strip('\"')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 80,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "from datetime import datetime\n",
+    "\n",
+    "def date_parse(datestring):\n",
+    "    try:\n",
+    "        return None if datestring == '' else str(datetime.strptime(datestring, '%Y-%m-%d'))\n",
+    "    except ValueError:\n",
+    "        print datestring"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 81,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "def boolean_map(field):\n",
+    "    if field == 't':\n",
+    "        return True\n",
+    "    elif field == 'f':\n",
+    "        return False\n",
+    "    else:\n",
+    "        None"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 82,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "type_conversion_func = {\n",
+    "    'id': quote_strip,\n",
+    "    'date': date_parse,\n",
+    "    'boolean': boolean_map,\n",
+    "    'float': lambda x: None if x == '' else float(x),\n",
+    "    'integer': lambda x: None if x == '' else int(x),\n",
+    "    'string': lambda x: None if x == '' else x\n",
+    "}"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 84,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "types = [\n",
+    "    StringType(),\n",
+    "    StringType(),\n",
+    "    StringType(),\n",
+    "    StringType(),\n",
+    "    FloatType(),\n",
+    "    FloatType(),\n",
+    "    StringType(),\n",
+    "    StringType(),\n",
+    "    StringType(),\n",
+    "    StringType(),\n",
+    "    StringType(),\n",
+    "    StringType(),\n",
+    "    BooleanType(),\n",
+    "    BooleanType(),\n",
+    "    BooleanType(),\n",
+    "    BooleanType(),\n",
+    "    BooleanType(),\n",
+    "    BooleanType(),\n",
+    "    StringType(),\n",
+    "    BooleanType(),\n",
+    "    BooleanType(),\n",
+    "    StringType(),\n",
+    "    StringType(),\n",
+    "    StringType(),\n",
+    "    StringType(),\n",
+    "    StringType(),\n",
+    "    StringType(),\n",
+    "    StringType(),\n",
+    "    FloatType(),\n",
+    "    FloatType(),\n",
+    "    FloatType(),\n",
+    "    FloatType(),\n",
+    "    FloatType(),\n",
+    "    FloatType(),\n",
+    "    FloatType(),\n",
+    "    FloatType(),\n",
+    "    FloatType(),\n",
+    "    BooleanType(),\n",
+    "    BooleanType(),\n",
+    "    StringType(),\n",
+    "    DateType(),\n",
+    "    DateType(),\n",
+    "    DateType(),\n",
+    "    DateType()\n",
+    "]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 88,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "{u'_projectid': StringType,\n",
+       " u'_schoolid': StringType,\n",
+       " u'_teacher_acctid': StringType,\n",
+       " u'date_completed': DateType,\n",
+       " u'date_expiration': DateType,\n",
+       " u'date_posted': DateType,\n",
+       " u'date_thank_you_packet_mailed': DateType,\n",
+       " u'eligible_almost_home_match': BooleanType,\n",
+       " u'eligible_double_your_impact_match': BooleanType,\n",
+       " u'fulfillment_labor_materials': FloatType,\n",
+       " u'funding_status': StringType,\n",
+       " u'grade_level': StringType,\n",
+       " u'num_donors': FloatType,\n",
+       " u'payment_processing_charges': FloatType,\n",
+       " u'poverty_level': StringType,\n",
+       " u'primary_focus_area': StringType,\n",
+       " u'primary_focus_subject': StringType,\n",
+       " u'resource_type': StringType,\n",
+       " u'sales_tax': FloatType,\n",
+       " u'school_charter': BooleanType,\n",
+       " u'school_charter_ready_promise': BooleanType,\n",
+       " u'school_city': StringType,\n",
+       " u'school_county': StringType,\n",
+       " u'school_district': StringType,\n",
+       " u'school_kipp': BooleanType,\n",
+       " u'school_latitude': FloatType,\n",
+       " u'school_longitude': FloatType,\n",
+       " u'school_magnet': BooleanType,\n",
+       " u'school_metro': StringType,\n",
+       " u'school_ncesid': StringType,\n",
+       " u'school_nlns': BooleanType,\n",
+       " u'school_state': StringType,\n",
+       " u'school_year_round': BooleanType,\n",
+       " u'school_zip': StringType,\n",
+       " u'secondary_focus_area': StringType,\n",
+       " u'secondary_focus_subject': StringType,\n",
+       " u'students_reached': FloatType,\n",
+       " u'teacher_ny_teaching_fellow': BooleanType,\n",
+       " u'teacher_prefix': StringType,\n",
+       " u'teacher_teach_for_america': BooleanType,\n",
+       " u'total_donations': FloatType,\n",
+       " u'total_price_excluding_optional_support': FloatType,\n",
+       " u'total_price_including_optional_support': FloatType,\n",
+       " u'vendor_shipping_charges': FloatType}"
+      ]
+     },
+     "execution_count": 88,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "column_type_lookup = dict(zip(header_list, types))\n",
+    "column_type_lookup"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 89,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "#creating data frame\n",
+    "import json\n",
+    "\n",
+    "def convert_types(d):\n",
+    "    for field in d:\n",
+    "        if field[0] == \"_\":\n",
+    "            transform = type_conversion_func['id']\n",
+    "        else:\n",
+    "            transform = type_conversion_func[column_type_lookup[field].typeName()]\n",
+    "        \n",
+    "        d[field] = transform(d[field])\n",
+    "        \n",
+    "    return json.dumps(d)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 90,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "rdd_typed = rdd_dict.map(convert_types)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 91,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "['{\"total_price_including_optional_support\": 279.27, \"school_district\": \"New York City Dept Of Ed\", \"secondary_focus_area\": null, \"primary_focus_area\": \"Applied Learning\", \"school_latitude\": 40.688454, \"date_thank_you_packet_mailed\": null, \"school_year_round\": false, \"school_charter\": false, \"_projectid\": \"7342bd01a2a7725ce033a179d22e382d\", \"_schoolid\": \"9e72d6f2f1e9367b578b6479aa5852b7\", \"teacher_teach_for_america\": false, \"school_magnet\": true, \"school_kipp\": false, \"date_posted\": null, \"payment_processing_charges\": null, \"grade_level\": \"Grades 6-8\", \"primary_focus_subject\": \"Other\", \"school_ncesid\": \"360009702803\", \"poverty_level\": \"highest poverty\", \"school_state\": \"NY\", \"school_charter_ready_promise\": false, \"teacher_prefix\": \"Mr.\", \"school_county\": \"Kings (Brooklyn)\", \"date_expiration\": null, \"vendor_shipping_charges\": null, \"students_reached\": 0.0, \"school_city\": \"Brooklyn\", \"num_donors\": 1.0, \"eligible_double_your_impact_match\": false, \"funding_status\": \"completed\", \"school_longitude\": -73.910432, \"total_donations\": 251.0, \"teacher_ny_teaching_fellow\": false, \"date_completed\": null, \"secondary_focus_subject\": null, \"eligible_almost_home_match\": false, \"school_nlns\": false, \"school_metro\": \"urban\", \"fulfillment_labor_materials\": null, \"total_price_excluding_optional_support\": 229.0, \"sales_tax\": null, \"school_zip\": \"11207\", \"resource_type\": \"Supplies\", \"_teacher_acctid\": \"5c43ef5eac0f5857c266baa1ccfa3d3f\"}']"
+      ]
+     },
+     "execution_count": 91,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "rdd_typed.take(1)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 92,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "from pyspark.sql import Row\n",
+    "\n",
+    "sqlContext = ps.HiveContext(sc)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 93,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "#infer schema\n",
+    "df = sqlContext.jsonRDD(rdd_typed)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 94,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "root\n",
+      " |-- _projectid: string (nullable = true)\n",
+      " |-- _schoolid: string (nullable = true)\n",
+      " |-- _teacher_acctid: string (nullable = true)\n",
+      " |-- date_completed: string (nullable = true)\n",
+      " |-- date_expiration: string (nullable = true)\n",
+      " |-- date_posted: string (nullable = true)\n",
+      " |-- date_thank_you_packet_mailed: string (nullable = true)\n",
+      " |-- eligible_almost_home_match: boolean (nullable = true)\n",
+      " |-- eligible_double_your_impact_match: boolean (nullable = true)\n",
+      " |-- fulfillment_labor_materials: double (nullable = true)\n",
+      " |-- funding_status: string (nullable = true)\n",
+      " |-- grade_level: string (nullable = true)\n",
+      " |-- num_donors: double (nullable = true)\n",
+      " |-- payment_processing_charges: double (nullable = true)\n",
+      " |-- poverty_level: string (nullable = true)\n",
+      " |-- primary_focus_area: string (nullable = true)\n",
+      " |-- primary_focus_subject: string (nullable = true)\n",
+      " |-- resource_type: string (nullable = true)\n",
+      " |-- sales_tax: double (nullable = true)\n",
+      " |-- school_charter: boolean (nullable = true)\n",
+      " |-- school_charter_ready_promise: boolean (nullable = true)\n",
+      " |-- school_city: string (nullable = true)\n",
+      " |-- school_county: string (nullable = true)\n",
+      " |-- school_district: string (nullable = true)\n",
+      " |-- school_kipp: boolean (nullable = true)\n",
+      " |-- school_latitude: double (nullable = true)\n",
+      " |-- school_longitude: double (nullable = true)\n",
+      " |-- school_magnet: boolean (nullable = true)\n",
+      " |-- school_metro: string (nullable = true)\n",
+      " |-- school_ncesid: string (nullable = true)\n",
+      " |-- school_nlns: boolean (nullable = true)\n",
+      " |-- school_state: string (nullable = true)\n",
+      " |-- school_year_round: boolean (nullable = true)\n",
+      " |-- school_zip: string (nullable = true)\n",
+      " |-- secondary_focus_area: string (nullable = true)\n",
+      " |-- secondary_focus_subject: string (nullable = true)\n",
+      " |-- students_reached: double (nullable = true)\n",
+      " |-- teacher_ny_teaching_fellow: boolean (nullable = true)\n",
+      " |-- teacher_prefix: string (nullable = true)\n",
+      " |-- teacher_teach_for_america: boolean (nullable = true)\n",
+      " |-- total_donations: double (nullable = true)\n",
+      " |-- total_price_excluding_optional_support: double (nullable = true)\n",
+      " |-- total_price_including_optional_support: double (nullable = true)\n",
+      " |-- vendor_shipping_charges: double (nullable = true)\n",
+      "\n",
+      "root\n",
+      " |-- _projectid: string (nullable = true)\n",
+      " |-- _teacher_acctid: string (nullable = true)\n",
+      " |-- _schoolid: string (nullable = true)\n",
+      " |-- school_ncesid: string (nullable = true)\n",
+      " |-- school_latitude: float (nullable = true)\n",
+      " |-- school_longitude: float (nullable = true)\n",
+      " |-- school_city: string (nullable = true)\n",
+      " |-- school_state: string (nullable = true)\n",
+      " |-- school_zip: string (nullable = true)\n",
+      " |-- school_metro: string (nullable = true)\n",
+      " |-- school_district: string (nullable = true)\n",
+      " |-- school_county: string (nullable = true)\n",
+      " |-- school_charter: boolean (nullable = true)\n",
+      " |-- school_magnet: boolean (nullable = true)\n",
+      " |-- school_year_round: boolean (nullable = true)\n",
+      " |-- school_nlns: boolean (nullable = true)\n",
+      " |-- school_kipp: boolean (nullable = true)\n",
+      " |-- school_charter_ready_promise: boolean (nullable = true)\n",
+      " |-- teacher_prefix: string (nullable = true)\n",
+      " |-- teacher_teach_for_america: boolean (nullable = true)\n",
+      " |-- teacher_ny_teaching_fellow: boolean (nullable = true)\n",
+      " |-- primary_focus_subject: string (nullable = true)\n",
+      " |-- primary_focus_area: string (nullable = true)\n",
+      " |-- secondary_focus_subject: string (nullable = true)\n",
+      " |-- secondary_focus_area: string (nullable = true)\n",
+      " |-- resource_type: string (nullable = true)\n",
+      " |-- poverty_level: string (nullable = true)\n",
+      " |-- grade_level: string (nullable = true)\n",
+      " |-- vendor_shipping_charges: float (nullable = true)\n",
+      " |-- sales_tax: float (nullable = true)\n",
+      " |-- payment_processing_charges: float (nullable = true)\n",
+      " |-- fulfillment_labor_materials: float (nullable = true)\n",
+      " |-- total_price_excluding_optional_support: float (nullable = true)\n",
+      " |-- total_price_including_optional_support: float (nullable = true)\n",
+      " |-- students_reached: float (nullable = true)\n",
+      " |-- total_donations: float (nullable = true)\n",
+      " |-- num_donors: float (nullable = true)\n",
+      " |-- eligible_double_your_impact_match: boolean (nullable = true)\n",
+      " |-- eligible_almost_home_match: boolean (nullable = true)\n",
+      " |-- funding_status: string (nullable = true)\n",
+      " |-- date_posted: date (nullable = true)\n",
+      " |-- date_completed: date (nullable = true)\n",
+      " |-- date_thank_you_packet_mailed: date (nullable = true)\n",
+      " |-- date_expiration: date (nullable = true)\n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "df.printSchema()\n",
+    "\n",
+    "structs = map(lambda x: StructField(*x), zip(header_list, types))\n",
+    "schema = StructType(structs)\n",
+    "schema.fields\n",
+    "\n",
+    "df_force = sqlContext.jsonRDD(rdd_typed, schema=schema)\n",
+    "#force schema\n",
+    "df_force.printSchema()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 95,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "+--------------------+--------------------+--------------------+-------------+---------------+----------------+-------------+------------+----------+------------+--------------------+--------------------+--------------+-------------+-----------------+-----------+-----------+----------------------------+--------------+-------------------------+--------------------------+---------------------+-------------------+-----------------------+--------------------+-------------+----------------+-------------+-----------------------+---------+--------------------------+---------------------------+--------------------------------------+--------------------------------------+----------------+---------------+----------+---------------------------------+--------------------------+--------------+-----------+--------------+----------------------------+---------------+\n",
+      "|          _projectid|     _teacher_acctid|           _schoolid|school_ncesid|school_latitude|school_longitude|  school_city|school_state|school_zip|school_metro|     school_district|       school_county|school_charter|school_magnet|school_year_round|school_nlns|school_kipp|school_charter_ready_promise|teacher_prefix|teacher_teach_for_america|teacher_ny_teaching_fellow|primary_focus_subject| primary_focus_area|secondary_focus_subject|secondary_focus_area|resource_type|   poverty_level|  grade_level|vendor_shipping_charges|sales_tax|payment_processing_charges|fulfillment_labor_materials|total_price_excluding_optional_support|total_price_including_optional_support|students_reached|total_donations|num_donors|eligible_double_your_impact_match|eligible_almost_home_match|funding_status|date_posted|date_completed|date_thank_you_packet_mailed|date_expiration|\n",
+      "+--------------------+--------------------+--------------------+-------------+---------------+----------------+-------------+------------+----------+------------+--------------------+--------------------+--------------+-------------+-----------------+-----------+-----------+----------------------------+--------------+-------------------------+--------------------------+---------------------+-------------------+-----------------------+--------------------+-------------+----------------+-------------+-----------------------+---------+--------------------------+---------------------------+--------------------------------------+--------------------------------------+----------------+---------------+----------+---------------------------------+--------------------------+--------------+-----------+--------------+----------------------------+---------------+\n",
+      "|7342bd01a2a7725ce...|5c43ef5eac0f5857c...|9e72d6f2f1e9367b5...| 360009702803|      40.688454|       -73.91043|     Brooklyn|          NY|     11207|       urban|New York City Dep...|    Kings (Brooklyn)|         false|         true|            false|      false|      false|                       false|           Mr.|                    false|                     false|                Other|   Applied Learning|                   null|                null|     Supplies| highest poverty|   Grades 6-8|                   null|     null|                      null|                       null|                                 229.0|                                279.27|             0.0|          251.0|       1.0|                            false|                     false|     completed|       null|          null|                        null|           null|\n",
+      "|b56b502d25666e295...|57426949b47700ccf...|4a06a328dd87bd298...| 360007702569|      40.770233|       -73.95076|     New York|          NY|     10075|        null|New York City Dep...|New York (Manhattan)|         false|         true|            false|      false|      false|                       false|           Ms.|                    false|                     false|    Early Development|   Applied Learning|                   null|                null|     Supplies|moderate poverty|   Grades 3-5|                   null|     null|                      null|                       null|                                 125.0|                                152.44|             0.0|          125.0|       1.0|                            false|                     false|     completed|       null|          null|                        null|           null|\n",
+      "|3a88a47f97bd0c9b7...|7a20087fac8623288...|66d08b506d2f3c30d...| 360012202592|      40.729763|      -73.816925|     Flushing|          NY|     11367|       urban|New York City Dep...|              Queens|         false|        false|            false|      false|      false|                       false|           Ms.|                    false|                     false| Health & Life Sci...|     Math & Science|                   null|                null|        Trips| highest poverty|   Grades 3-5|                   null|     null|                      null|                       null|                                1835.0|                                2237.8|             0.0|         2110.0|       1.0|                            false|                     false|     completed|       null|          null|                        null|           null|\n",
+      "|0b8a4f8eb1822ab6d...|e5d28482308e20079...|9bc7d4d92193a4536...| 360007705560|       40.70178|       -74.01184|     New York|          NY|     10004|       urban|               Other|New York (Manhattan)|         false|        false|            false|      false|      false|                       false|           Mr.|                    false|                     false|            Economics|   History & Civics|                   null|                null|   Technology| highest poverty|  Grades 9-12|                   null|     null|                      null|                       null|                                1129.0|                               1376.83|             0.0|         1241.0|       1.0|                            false|                     false|     completed|       null|          null|                        null|           null|\n",
+      "|45235cb116b3b35cd...|214d75bd0e6ce3e70...|f7f12dee0009e6f9a...|         null|      40.815018|      -73.856094|        Bronx|          NY|     10473|       urban|Leadership Learni...|               Bronx|         false|        false|            false|      false|      false|                       false|           Ms.|                     true|                     false|          Mathematics|     Math & Science|                   null|                null|   Technology| highest poverty|   Grades 6-8|                   null|     null|                      null|                       null|                                  83.0|                                101.22|             0.0|           83.0|       1.0|                            false|                     false|     completed|       null|          null|                        null|           null|\n",
+      "|0b9607c9d3deb8b49...|454840ad7f58f2486...|0fad38af2fb328dd0...| 360008102489|      40.809677|       -73.93918|     New York|          NY|     10037|       urban|New York City Dep...|New York (Manhattan)|         false|        false|            false|      false|      false|                       false|           Ms.|                    false|                     false| Environmental Sci...|     Math & Science|                   null|                null|     Supplies| highest poverty|Grades PreK-2|                   null|     null|                      null|                       null|                                 231.0|                                281.71|             0.0|          254.0|       1.0|                            false|                     false|     completed|       null|          null|                        null|           null|\n",
+      "|702ef0896a72c258a...|e11a44441e6047532...|7e6d4e9ce212bbcc7...| 360010302216|      40.620422|       -74.08075|Staten Island|          NY|     10304|       urban|New York City Dep...|Richmond (Staten ...|         false|        false|            false|      false|      false|                       false|           Mr.|                    false|                     false|  History & Geography|   History & Civics|                   null|                null|   Technology| highest poverty|   Grades 6-8|                   null|     null|                      null|                       null|                                 331.0|                                403.66|             0.0|          364.0|       1.0|                            false|                     false|     completed|       null|          null|                        null|           null|\n",
+      "|3b5f4ae59d96f719d...|6504d611038542e63...|9ce97ca91e28b8493...| 360007803622|       40.79146|       -73.97055|     New York|          NY|     10025|       urban|New York City Dep...|New York (Manhattan)|         false|        false|            false|      false|      false|                       false|           Mr.|                    false|                     false|             Literacy|Literacy & Language|                   null|                null|        Books|moderate poverty|   Grades 6-8|                   null|     null|                      null|                       null|                                 309.0|                                376.83|             0.0|          313.0|       2.0|                            false|                     false|     completed|       null|          null|                        null|           null|\n",
+      "|a2b95aabc7e8518b5...|6ace63f88c1e30fa5...|6f0382325857ae346...|         null|      40.753002|       -73.99241|     New York|          NY|     10018|        null|                null|New York (Manhattan)|         false|        false|            false|      false|      false|                       false|          Mrs.|                    false|                     false|    Early Development|   Applied Learning|                   null|                null|     Supplies|     low poverty|Grades PreK-2|                   null|     null|                      null|                       null|                                 413.0|                                503.66|             0.0|          454.0|       1.0|                            false|                     false|     completed|       null|          null|                        null|           null|\n",
+      "|912e8cd1a736d2653...|0c2d4535f03991165...|cabcc3ed826056c39...| 360008502463|      40.829224|      -73.856895|        Bronx|          NY|     10472|       urban|New York City Dep...|               Bronx|         false|        false|            false|      false|      false|                       false|           Ms.|                    false|                     false|             Literacy|Literacy & Language|                   null|                null|        Books| highest poverty|   Grades 3-5|                   null|     null|                      null|                       null|                                 346.0|                                421.95|             0.0|          380.0|       1.0|                            false|                     false|     completed|       null|          null|                        null|           null|\n",
+      "|afdb477cc1ecfdce9...|e11a44441e6047532...|7e6d4e9ce212bbcc7...| 360010302216|      40.620422|       -74.08075|Staten Island|          NY|     10304|       urban|New York City Dep...|Richmond (Staten ...|         false|        false|            false|      false|      false|                       false|           Mr.|                    false|                     false|  History & Geography|   History & Civics|                   null|                null|   Technology| highest poverty|   Grades 6-8|                   null|     null|                      null|                       null|                                 125.0|                                152.44|             0.0|          137.0|       1.0|                            false|                     false|     completed|       null|          null|                        null|           null|\n",
+      "|97b50c1fef7c22945...|0c2d4535f03991165...|cabcc3ed826056c39...| 360008502463|      40.829224|      -73.856895|        Bronx|          NY|     10472|       urban|New York City Dep...|               Bronx|         false|        false|            false|      false|      false|                       false|           Ms.|                    false|                     false|             Literacy|Literacy & Language|                   null|                null|        Books| highest poverty|   Grades 3-5|                   null|     null|                      null|                       null|                                 334.0|                                407.32|             0.0|          367.0|       1.0|                            false|                     false|     completed|       null|          null|                        null|           null|\n",
+      "|e24d8bb3d268a7c83...|0c2d4535f03991165...|cabcc3ed826056c39...| 360008502463|      40.829224|      -73.856895|        Bronx|          NY|     10472|       urban|New York City Dep...|               Bronx|         false|        false|            false|      false|      false|                       false|           Ms.|                    false|                     false|             Literacy|Literacy & Language|                   null|                null|        Books| highest poverty|   Grades 3-5|                   null|     null|                      null|                       null|                                 348.7|                                425.24|             0.0|            0.0|       0.0|                            false|                     false|     completed|       null|          null|                        null|           null|\n",
+      "|eb886a0ef1f498eb8...|b55921c6a3999b1f6...|993e6202ffb7607f9...| 360009100867|      40.697353|       -73.98451|     Brooklyn|          NY|     11201|       urban|New York City Dep...|    Kings (Brooklyn)|         false|         true|            false|      false|      false|                       false|          Mrs.|                    false|                     false|  History & Geography|   History & Civics|                   null|                null|        Other| highest poverty|  Grades 9-12|                   null|     null|                      null|                       null|                                 525.0|                                640.24|             0.0|          577.0|       1.0|                            false|                     false|     completed|       null|          null|                        null|           null|\n",
+      "|0d97d7543a766a07b...|d41b22314bd46c301...|9bd4079c3ace16b80...|         null|       40.80266|        -73.9481|     NEW YORK|          NY|     10026|        null|               Other|New York (Manhattan)|         false|        false|            false|      false|      false|                       false|           Ms.|                    false|                     false|             Literacy|Literacy & Language|                   null|                null|     Supplies| highest poverty|Grades PreK-2|                   null|     null|                      null|                       null|                                 456.0|                                 556.1|             0.0|            0.0|       0.0|                            false|                     false|     completed|       null|          null|                        null|           null|\n",
+      "|016f03312995d5c89...|9c0aa56b63b743454...|bb0af5dac1b54693b...| 360007605617|      40.727825|       -73.97872|     New York|          NY|     10009|       urban|New York City Dep...|New York (Manhattan)|         false|        false|            false|      false|      false|                       false|           Ms.|                    false|                     false|  History & Geography|   History & Civics|                   null|                null|     Supplies|    high poverty|Grades PreK-2|                   null|     null|                      null|                       null|                                 187.0|                                228.05|             0.0|          205.0|       1.0|                            false|                     false|     completed|       null|          null|                        null|           null|\n",
+      "|182f1734c1c6ec13d...|0c2d4535f03991165...|cabcc3ed826056c39...| 360008502463|      40.829224|      -73.856895|        Bronx|          NY|     10472|       urban|New York City Dep...|               Bronx|         false|        false|            false|      false|      false|                       false|           Ms.|                    false|                     false|             Literacy|Literacy & Language|                   null|                null|        Books| highest poverty|   Grades 3-5|                   null|     null|                      null|                       null|                                 330.0|                                402.44|             0.0|          363.0|       1.0|                            false|                     false|     completed|       null|          null|                        null|           null|\n",
+      "|25afa366264801de8...|c0ff926aa5705245f...|b5999531e0c1bb628...| 360008302485|       40.85057|       -73.93399|     New York|          NY|     10033|       urban|New York City Dep...|New York (Manhattan)|         false|        false|            false|      false|      false|                       false|           Ms.|                     true|                     false|    Early Development|   Applied Learning|                   null|                null|     Supplies| highest poverty|   Grades 3-5|                   null|     null|                      null|                       null|                                 390.0|                                475.61|             0.0|          390.0|       1.0|                            false|                     false|     completed|       null|          null|                        null|           null|\n",
+      "|2baeda61bab17a9ff...|0c2d4535f03991165...|cabcc3ed826056c39...| 360008502463|      40.829224|      -73.856895|        Bronx|          NY|     10472|       urban|New York City Dep...|               Bronx|         false|        false|            false|      false|      false|                       false|           Ms.|                    false|                     false|             Literacy|Literacy & Language|                   null|                null|        Books| highest poverty|   Grades 3-5|                   null|     null|                      null|                       null|                                 462.0|                                563.41|             0.0|          508.0|       1.0|                            false|                     false|     completed|       null|          null|                        null|           null|\n",
+      "|5821ee8eaab15a3be...|6ace63f88c1e30fa5...|6f0382325857ae346...|         null|      40.753002|       -73.99241|     New York|          NY|     10018|        null|                null|New York (Manhattan)|         false|        false|            false|      false|      false|                       false|          Mrs.|                    false|                     false|                Music|   Music & The Arts|                   null|                null|     Supplies|     low poverty|Grades PreK-2|                   null|     null|                      null|                       null|                                 291.0|                                354.88|             0.0|          320.0|       1.0|                            false|                     false|     completed|       null|          null|                        null|           null|\n",
+      "+--------------------+--------------------+--------------------+-------------+---------------+----------------+-------------+------------+----------+------------+--------------------+--------------------+--------------+-------------+-----------------+-----------+-----------+----------------------------+--------------+-------------------------+--------------------------+---------------------+-------------------+-----------------------+--------------------+-------------+----------------+-------------+-----------------------+---------+--------------------------+---------------------------+--------------------------------------+--------------------------------------+----------------+---------------+----------+---------------------------------+--------------------------+--------------+-----------+--------------+----------------------------+---------------+\n",
+      "only showing top 20 rows\n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "# when schema forced, dates convert correctly\n",
+    "df_force.first()\n",
+    "\n",
+    "df_force.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 96,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "# subselect relevant columns\n",
+    "df_subselect = df_force.select('school_city', 'primary_focus_area', \\\n",
+    "                               df_force['resource_type'].alias('resource'), \\\n",
+    "                               'poverty_level','grade_level', \\\n",
+    "                               df_force['total_price_excluding_optional_support'].alias('p_exclude'), \\\n",
+    "                               df_force['total_donations'].alias('total_d'), \\\n",
+    "                               df_force['funding_status'].alias('status'))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 97,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "+-------------+-------------------+----------+----------------+-------------+---------+-------+---------+\n",
+      "|  school_city| primary_focus_area|  resource|   poverty_level|  grade_level|p_exclude|total_d|   status|\n",
+      "+-------------+-------------------+----------+----------------+-------------+---------+-------+---------+\n",
+      "|     Brooklyn|   Applied Learning|  Supplies| highest poverty|   Grades 6-8|    229.0|  251.0|completed|\n",
+      "|     New York|   Applied Learning|  Supplies|moderate poverty|   Grades 3-5|    125.0|  125.0|completed|\n",
+      "|     Flushing|     Math & Science|     Trips| highest poverty|   Grades 3-5|   1835.0| 2110.0|completed|\n",
+      "|     New York|   History & Civics|Technology| highest poverty|  Grades 9-12|   1129.0| 1241.0|completed|\n",
+      "|        Bronx|     Math & Science|Technology| highest poverty|   Grades 6-8|     83.0|   83.0|completed|\n",
+      "|     New York|     Math & Science|  Supplies| highest poverty|Grades PreK-2|    231.0|  254.0|completed|\n",
+      "|Staten Island|   History & Civics|Technology| highest poverty|   Grades 6-8|    331.0|  364.0|completed|\n",
+      "|     New York|Literacy & Language|     Books|moderate poverty|   Grades 6-8|    309.0|  313.0|completed|\n",
+      "|     New York|   Applied Learning|  Supplies|     low poverty|Grades PreK-2|    413.0|  454.0|completed|\n",
+      "|        Bronx|Literacy & Language|     Books| highest poverty|   Grades 3-5|    346.0|  380.0|completed|\n",
+      "|Staten Island|   History & Civics|Technology| highest poverty|   Grades 6-8|    125.0|  137.0|completed|\n",
+      "|        Bronx|Literacy & Language|     Books| highest poverty|   Grades 3-5|    334.0|  367.0|completed|\n",
+      "|        Bronx|Literacy & Language|     Books| highest poverty|   Grades 3-5|    348.7|    0.0|completed|\n",
+      "|     Brooklyn|   History & Civics|     Other| highest poverty|  Grades 9-12|    525.0|  577.0|completed|\n",
+      "|     NEW YORK|Literacy & Language|  Supplies| highest poverty|Grades PreK-2|    456.0|    0.0|completed|\n",
+      "|     New York|   History & Civics|  Supplies|    high poverty|Grades PreK-2|    187.0|  205.0|completed|\n",
+      "|        Bronx|Literacy & Language|     Books| highest poverty|   Grades 3-5|    330.0|  363.0|completed|\n",
+      "|     New York|   Applied Learning|  Supplies| highest poverty|   Grades 3-5|    390.0|  390.0|completed|\n",
+      "|        Bronx|Literacy & Language|     Books| highest poverty|   Grades 3-5|    462.0|  508.0|completed|\n",
+      "|     New York|   Music & The Arts|  Supplies|     low poverty|Grades PreK-2|    291.0|  320.0|completed|\n",
+      "+-------------+-------------------+----------+----------------+-------------+---------+-------+---------+\n",
+      "only showing top 20 rows\n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "df_subselect.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 98,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "[Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'expired'),\n",
+       " Row(students_reached=None, funding_status=u'completed'),\n",
+       " Row(students_reached=None, funding_status=u'completed')]"
+      ]
+     },
+     "execution_count": 98,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#null value check\n",
+    "df_force.filter(df_force['students_reached'].isNull()).select('students_reached', 'funding_status').collect()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 99,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "df_no_null = df_force.fillna(0, ['students_reached'])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 100,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "#frequent items - 70% apprearence\n",
+    "freq_items = df_no_null.freqItems(['school_city', 'primary_focus_area', \\\n",
+    "                                     'grade_level', 'poverty_level','resource_type'], 0.7).collect()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 101,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "Row(school_city_freqItems=[], primary_focus_area_freqItems=[u'Literacy & Language'], grade_level_freqItems=[u'Grades PreK-2'], poverty_level_freqItems=[u'highest poverty'], resource_type_freqItems=[u'Technology'])"
+      ]
+     },
+     "execution_count": 101,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "freq_items[0]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 102,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "Row(num_donors_freqItems=[4.0, 1.0, 0.0])"
+      ]
+     },
+     "execution_count": 102,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df_no_null.freqItems(['num_donors'], .3).collect()[0]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 103,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "+--------------+------+\n",
+      "|funding_status| count|\n",
+      "+--------------+------+\n",
+      "|     completed|592757|\n",
+      "|   reallocated|  8129|\n",
+      "|       expired|253407|\n",
+      "|          live| 24559|\n",
+      "+--------------+------+\n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "#distributions\n",
+    "df_no_null.groupby('funding_status').count().show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 104,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "df_complete = df_no_null.filter(df_no_null['funding_status'] == 'completed')\n",
+    "df_expired = df_no_null.filter(df_no_null['funding_status'] == 'expired')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 105,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "df_complete.write.json('file://' + cwd + '/data/donors_choose/opendata_completed.json')\n",
+    "df_expired.write.json('file://' + cwd + '/data/donors_choose/opendata_expired.json')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 106,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "df_complete.groupby('num_donors').count().write.json('file://' + cwd + '/data/donors_choose/num_donors_completed.json')\n",
+    "df_expired.groupby('num_donors').count().write.json('file://' + cwd + '/data/donors_choose/num_donors_expired.json')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 107,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "940K\tdata/donors_choose/num_donors_expired.json\r\n",
+      "303M\tdata/donors_choose/opendata_expired.json\r\n",
+      "710M\tdata/donors_choose/opendata_completed.json\r\n",
+      "940K\tdata/donors_choose/num_donors_completed.json\r\n",
+      "1015M\tdata/donors_choose\r\n",
+      "1015M\tdata/\r\n"
+     ]
+    }
+   ],
+   "source": [
+    "!du -h data/"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 108,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "+-------+-----------------+-----------------+------------------+-----------------+-----------------+\n",
+      "|summary|  total_donations|       num_donors|  students_reached|        p_exclude|        p_include|\n",
+      "+-------+-----------------+-----------------+------------------+-----------------+-----------------+\n",
+      "|  count|           878852|           878852|            878852|           878852|           878852|\n",
+      "|   mean|404.7736035191363| 4.35791350534561| 96.14597110776332|585.2855657367923|693.8735538552612|\n",
+      "| stddev|766.6547757306174|6.288186721755763|1986.0736652055787|11034.18094078489|13453.73099895948|\n",
+      "|    min|              0.0|              0.0|               0.0|              0.0|              0.0|\n",
+      "|    max|         244778.0|            848.0|          999999.0|      1.0250017E7|      1.2500021E7|\n",
+      "+-------+-----------------+-----------------+------------------+-----------------+-----------------+\n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "#summary statistics\n",
+    "df_no_null.select('total_donations', 'num_donors', 'students_reached', \\\n",
+    "                  df_no_null['total_price_excluding_optional_support'].alias('p_exclude'), \\\n",
+    "                  df_no_null['total_price_including_optional_support'].alias('p_include')) \\\n",
+    "          .describe().show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 109,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "price_rdd = df_no_null.select('total_price_excluding_optional_support').rdd.map(lambda r: r.asDict().values()[0])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 110,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "[10250017.0, 1000000.0, 437212.0]"
+      ]
+     },
+     "execution_count": 110,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# massive outliers, will skew histogram buckets\n",
+    "outliers = price_rdd.top(3)\n",
+    "outliers"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 111,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "# for continuous columns we can use Histogram RDD function\n",
+    "hist = price_rdd.filter(lambda x: x not in outliers).histogram(100)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 112,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "([0.0,\n",
+       "  1397.2540625,\n",
+       "  2794.508125,\n",
+       "  4191.7621874999995,\n",
+       "  5589.01625,\n",
+       "  6986.2703125,\n",
+       "  8383.524374999999,\n",
+       "  9780.7784375,\n",
+       "  11178.0325,\n",
+       "  12575.2865625,\n",
+       "  13972.540625,\n",
+       "  15369.7946875,\n",
+       "  16767.048749999998,\n",
+       "  18164.3028125,\n",
+       "  19561.556875,\n",
+       "  20958.8109375,\n",
+       "  22356.065,\n",
+       "  23753.3190625,\n",
+       "  25150.573125,\n",
+       "  26547.8271875,\n",
+       "  27945.08125,\n",
+       "  29342.3353125,\n",
+       "  30739.589375,\n",
+       "  32136.8434375,\n",
+       "  33534.097499999996,\n",
+       "  34931.3515625,\n",
+       "  36328.605625,\n",
+       "  37725.8596875,\n",
+       "  39123.11375,\n",
+       "  40520.3678125,\n",
+       "  41917.621875,\n",
+       "  43314.8759375,\n",
+       "  44712.13,\n",
+       "  46109.384062499994,\n",
+       "  47506.638125,\n",
+       "  48903.892187499994,\n",
+       "  50301.14625,\n",
+       "  51698.400312499994,\n",
+       "  53095.654375,\n",
+       "  54492.908437499995,\n",
+       "  55890.1625,\n",
+       "  57287.416562499995,\n",
+       "  58684.670625,\n",
+       "  60081.924687499995,\n",
+       "  61479.17875,\n",
+       "  62876.432812499996,\n",
+       "  64273.686875,\n",
+       "  65670.9409375,\n",
+       "  67068.19499999999,\n",
+       "  68465.44906249999,\n",
+       "  69862.703125,\n",
+       "  71259.9571875,\n",
+       "  72657.21125,\n",
+       "  74054.46531249999,\n",
+       "  75451.719375,\n",
+       "  76848.9734375,\n",
+       "  78246.2275,\n",
+       "  79643.48156249999,\n",
+       "  81040.735625,\n",
+       "  82437.9896875,\n",
+       "  83835.24375,\n",
+       "  85232.49781249999,\n",
+       "  86629.751875,\n",
+       "  88027.0059375,\n",
+       "  89424.26,\n",
+       "  90821.51406249999,\n",
+       "  92218.76812499999,\n",
+       "  93616.0221875,\n",
+       "  95013.27625,\n",
+       "  96410.53031249999,\n",
+       "  97807.78437499999,\n",
+       "  99205.0384375,\n",
+       "  100602.2925,\n",
+       "  101999.54656249999,\n",
+       "  103396.80062499999,\n",
+       "  104794.0546875,\n",
+       "  106191.30875,\n",
+       "  107588.5628125,\n",
+       "  108985.81687499999,\n",
+       "  110383.0709375,\n",
+       "  111780.325,\n",
+       "  113177.5790625,\n",
+       "  114574.83312499999,\n",
+       "  115972.08718749999,\n",
+       "  117369.34125,\n",
+       "  118766.5953125,\n",
+       "  120163.84937499999,\n",
+       "  121561.10343749999,\n",
+       "  122958.3575,\n",
+       "  124355.6115625,\n",
+       "  125752.86562499999,\n",
+       "  127150.11968749999,\n",
+       "  128547.37375,\n",
+       "  129944.6278125,\n",
+       "  131341.881875,\n",
+       "  132739.1359375,\n",
+       "  134136.38999999998,\n",
+       "  135533.64406249998,\n",
+       "  136930.89812499998,\n",
+       "  138328.1521875,\n",
+       "  139725.40625],\n",
+       " [827908,\n",
+       "  43233,\n",
+       "  3871,\n",
+       "  1305,\n",
+       "  795,\n",
+       "  548,\n",
+       "  296,\n",
+       "  242,\n",
+       "  134,\n",
+       "  90,\n",
+       "  78,\n",
+       "  47,\n",
+       "  33,\n",
+       "  27,\n",
+       "  31,\n",
+       "  23,\n",
+       "  13,\n",
+       "  15,\n",
+       "  17,\n",
+       "  12,\n",
+       "  10,\n",
+       "  13,\n",
+       "  7,\n",
+       "  9,\n",
+       "  11,\n",
+       "  6,\n",
+       "  5,\n",
+       "  8,\n",
+       "  4,\n",
+       "  3,\n",
+       "  1,\n",
+       "  3,\n",
+       "  5,\n",
+       "  3,\n",
+       "  2,\n",
+       "  2,\n",
+       "  5,\n",
+       "  1,\n",
+       "  1,\n",
+       "  0,\n",
+       "  2,\n",
+       "  3,\n",
+       "  3,\n",
+       "  0,\n",
+       "  2,\n",
+       "  2,\n",
+       "  0,\n",
+       "  0,\n",
+       "  0,\n",
+       "  2,\n",
+       "  1,\n",
+       "  3,\n",
+       "  3,\n",
+       "  0,\n",
+       "  1,\n",
+       "  0,\n",
+       "  1,\n",
+       "  0,\n",
+       "  0,\n",
+       "  0,\n",
+       "  1,\n",
+       "  1,\n",
+       "  0,\n",
+       "  0,\n",
+       "  0,\n",
+       "  1,\n",
+       "  1,\n",
+       "  1,\n",
+       "  0,\n",
+       "  0,\n",
+       "  1,\n",
+       "  0,\n",
+       "  0,\n",
+       "  0,\n",
+       "  0,\n",
+       "  0,\n",
+       "  0,\n",
+       "  0,\n",
+       "  0,\n",
+       "  0,\n",
+       "  0,\n",
+       "  0,\n",
+       "  0,\n",
+       "  0,\n",
+       "  0,\n",
+       "  0,\n",
+       "  0,\n",
+       "  1,\n",
+       "  0,\n",
+       "  0,\n",
+       "  0,\n",
+       "  0,\n",
+       "  0,\n",
+       "  0,\n",
+       "  0,\n",
+       "  0,\n",
+       "  0,\n",
+       "  0,\n",
+       "  0,\n",
+       "  2])"
+      ]
+     },
+     "execution_count": 112,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "hist"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 113,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "/home/spark/anaconda2/lib/python2.7/site-packages/matplotlib/font_manager.py:273: UserWarning: Matplotlib is building the font cache using fc-list. This may take a moment.\n",
+      "  warnings.warn('Matplotlib is building the font cache using fc-list. This may take a moment.')\n",
+      "WARNING: "
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Populating the interactive namespace from numpy and matplotlib\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "pylab import has clobbered these variables: ['hist', 'types', 'datetime']\n",
+      "`%matplotlib` prevents importing * from pylab and numpy\n"
+     ]
+    }
+   ],
+   "source": [
+    "import matplotlib.pyplot as plt\n",
+    "import pandas as pd\n",
+    "\n",
+    "%pylab inline"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 114,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "def plot_rdd_hist(hist):\n",
+    "    idx = []\n",
+    "\n",
+    "    for i in range(len(hist[0]) - 1):\n",
+    "        idx.append((hist[0][i] + hist[0][i+1])/ 2)\n",
+    "        \n",
+    "    pd.DataFrame({'counts': hist[1], 'index': idx}).set_index('index').plot(figsize=(16,5))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 115,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "cheap_histogram = price_rdd.filter(lambda x: x < 5000).histogram(100)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 116,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "([0.0,\n",
+       "  49.9906982421875,\n",
+       "  99.981396484375,\n",
+       "  149.9720947265625,\n",
+       "  199.96279296875,\n",
+       "  249.9534912109375,\n",
+       "  299.944189453125,\n",
+       "  349.9348876953125,\n",
+       "  399.9255859375,\n",
+       "  449.91628417968747,\n",
+       "  499.906982421875,\n",
+       "  549.8976806640625,\n",
+       "  599.88837890625,\n",
+       "  649.8790771484374,\n",
+       "  699.869775390625,\n",
+       "  749.8604736328125,\n",
+       "  799.851171875,\n",
+       "  849.8418701171875,\n",
+       "  899.8325683593749,\n",
+       "  949.8232666015625,\n",
+       "  999.81396484375,\n",
+       "  1049.8046630859374,\n",
+       "  1099.795361328125,\n",
+       "  1149.7860595703125,\n",
+       "  1199.7767578125,\n",
+       "  1249.7674560546875,\n",
+       "  1299.7581542968749,\n",
+       "  1349.7488525390625,\n",
+       "  1399.73955078125,\n",
+       "  1449.7302490234374,\n",
+       "  1499.720947265625,\n",
+       "  1549.7116455078124,\n",
+       "  1599.70234375,\n",
+       "  1649.6930419921875,\n",
+       "  1699.683740234375,\n",
+       "  1749.6744384765625,\n",
+       "  1799.6651367187499,\n",
+       "  1849.6558349609375,\n",
+       "  1899.646533203125,\n",
+       "  1949.6372314453124,\n",
+       "  1999.6279296875,\n",
+       "  2049.6186279296876,\n",
+       "  2099.6093261718747,\n",
+       "  2149.6000244140623,\n",
+       "  2199.59072265625,\n",
+       "  2249.5814208984375,\n",
+       "  2299.572119140625,\n",
+       "  2349.562817382812,\n",
+       "  2399.553515625,\n",
+       "  2449.5442138671874,\n",
+       "  2499.534912109375,\n",
+       "  2549.5256103515626,\n",
+       "  2599.5163085937497,\n",
+       "  2649.5070068359373,\n",
+       "  2699.497705078125,\n",
+       "  2749.4884033203125,\n",
+       "  2799.4791015625,\n",
+       "  2849.469799804687,\n",
+       "  2899.460498046875,\n",
+       "  2949.4511962890624,\n",
+       "  2999.44189453125,\n",
+       "  3049.4325927734376,\n",
+       "  3099.4232910156247,\n",
+       "  3149.4139892578123,\n",
+       "  3199.4046875,\n",
+       "  3249.3953857421875,\n",
+       "  3299.386083984375,\n",
+       "  3349.376782226562,\n",
+       "  3399.36748046875,\n",
+       "  3449.3581787109374,\n",
+       "  3499.348876953125,\n",
+       "  3549.3395751953126,\n",
+       "  3599.3302734374997,\n",
+       "  3649.3209716796873,\n",
+       "  3699.311669921875,\n",
+       "  3749.3023681640625,\n",
+       "  3799.29306640625,\n",
+       "  3849.283764648437,\n",
+       "  3899.274462890625,\n",
+       "  3949.2651611328124,\n",
+       "  3999.255859375,\n",
+       "  4049.2465576171876,\n",
+       "  4099.237255859375,\n",
+       "  4149.227954101562,\n",
+       "  4199.218652343749,\n",
+       "  4249.2093505859375,\n",
+       "  4299.200048828125,\n",
+       "  4349.190747070313,\n",
+       "  4399.1814453125,\n",
+       "  4449.172143554687,\n",
+       "  4499.162841796875,\n",
+       "  4549.153540039062,\n",
+       "  4599.14423828125,\n",
+       "  4649.134936523437,\n",
+       "  4699.125634765624,\n",
+       "  4749.1163330078125,\n",
+       "  4799.10703125,\n",
+       "  4849.097729492188,\n",
+       "  4899.088427734375,\n",
+       "  4949.079125976562,\n",
+       "  4999.06982421875],\n",
+       " [473,\n",
+       "  1130,\n",
+       "  35147,\n",
+       "  78009,\n",
+       "  71930,\n",
+       "  68572,\n",
+       "  76749,\n",
+       "  75020,\n",
+       "  87462,\n",
+       "  74300,\n",
+       "  40323,\n",
+       "  30684,\n",
+       "  26241,\n",
+       "  25436,\n",
+       "  21257,\n",
+       "  21299,\n",
+       "  25599,\n",
+       "  17486,\n",
+       "  14883,\n",
+       "  7318,\n",
+       "  5712,\n",
+       "  3868,\n",
+       "  4019,\n",
+       "  3104,\n",
+       "  3794,\n",
+       "  3019,\n",
+       "  2530,\n",
+       "  2645,\n",
+       "  2388,\n",
+       "  2403,\n",
+       "  2367,\n",
+       "  2665,\n",
+       "  2511,\n",
+       "  4481,\n",
+       "  1793,\n",
+       "  1756,\n",
+       "  1644,\n",
+       "  1931,\n",
+       "  1696,\n",
+       "  2243,\n",
+       "  2108,\n",
+       "  3414,\n",
+       "  1306,\n",
+       "  1539,\n",
+       "  2355,\n",
+       "  1341,\n",
+       "  464,\n",
+       "  462,\n",
+       "  490,\n",
+       "  330,\n",
+       "  267,\n",
+       "  281,\n",
+       "  214,\n",
+       "  249,\n",
+       "  250,\n",
+       "  230,\n",
+       "  256,\n",
+       "  207,\n",
+       "  178,\n",
+       "  168,\n",
+       "  258,\n",
+       "  241,\n",
+       "  157,\n",
+       "  186,\n",
+       "  160,\n",
+       "  190,\n",
+       "  203,\n",
+       "  148,\n",
+       "  103,\n",
+       "  108,\n",
+       "  107,\n",
+       "  106,\n",
+       "  81,\n",
+       "  95,\n",
+       "  96,\n",
+       "  86,\n",
+       "  95,\n",
+       "  76,\n",
+       "  101,\n",
+       "  82,\n",
+       "  82,\n",
+       "  106,\n",
+       "  77,\n",
+       "  76,\n",
+       "  65,\n",
+       "  74,\n",
+       "  56,\n",
+       "  69,\n",
+       "  58,\n",
+       "  76,\n",
+       "  55,\n",
+       "  64,\n",
+       "  48,\n",
+       "  52,\n",
+       "  33,\n",
+       "  39,\n",
+       "  30,\n",
+       "  56,\n",
+       "  49,\n",
+       "  42])"
+      ]
+     },
+     "execution_count": 116,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "cheap_histogram"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 117,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "image/png": "iVBORw0KGgoAAAANSUhEUgAAA68AAAFHCAYAAABOEHovAAAABHNCSVQICAgIfAhkiAAAAAlwSFlz\nAAALEgAACxIB0t1+/AAAIABJREFUeJzs3XmYXGWd9//3NxskIYEgSYAEIgqRVQWGgCutIJuyOCoG\nRUAyzjwDP2HcLpLHcYyjMwiPMzJc84AzDkuCQGSYR2XfBtsBBAnIIosQxYQsJARCWBKyf39/nCpS\n6XSnq9NLVXW9X9d1rjp99zmnvqf6oPnUfZ/7RGYiSZIkSVI9G1DrAiRJkiRJ6ozhVZIkSZJU9wyv\nkiRJkqS6Z3iVJEmSJNU9w6skSZIkqe4ZXiVJkiRJda+q8BoR50bE70rLOaW2URFxR0Q8ExG3R8T2\nFdtPi4g5EfF0RBxV0X5QRDweEc9GxEUV7UMiYlZpn/sjYveePElJkiRJUmPrNLxGxH7AFODPgPcC\nn4iIdwJTgbsy813A3cC00vb7AicD+wDHApdERJQOdykwJTMnAhMj4uhS+xRgWWbuBVwEXNhD5ydJ\nkiRJ6geq6XndB/hNZq7OzPXA/wB/DpwAzChtMwM4qbR+AjArM9dl5lxgDjApInYGRmTm7NJ2Myv2\nObHiWNcDR2z9KUmSJEmS+ptqwusTwIdKw4SHAccBuwFjM3MJQGYuBsaUth8HzK/Yf2GpbRywoKJ9\nQaltk31KAXl5ROy4VWckSZIkSep3BnW2QWb+PiIuAO4E3gAeAda3t2kP1hWdbyJJkiRJahadhleA\nzLwCuAIgIv6Bopd0SUSMzcwlpSHBL5Y2X0jRM1s2vtTWUXvlPosiYiAwMjOXta0jInoyIEuSJEmS\n6kxmttuZWVV4jYjRmbm0NAvwJ4HDgD2AM4ALgNOBX5Q2vwG4OiJ+SDEceE/gwczMiHg1IiYBs4HT\ngIsr9jkd+A3wGYoJoDo6kWpKlurO9OnTmT59eq3LkHqE17P6G69p9Sdez2pkG+f63VxV4RX4r9I9\nqGuBszLztdJQ4usi4kxgHsUMw2TmUxFxHfBUxfblxHk2cCWwLXBLZt5War8MuCoi5gAvA5O7cH6S\nJEmSpH6u2mHDH26nbRlwZAfbnw+c3077w8AB7bSvphR+JUmSJElqq5rZhiX1gJaWllqXIPUYr2f1\nN17T6k+8ntVfRSPdQxoR2Uj1SpIkSZKqFxHdm7BJkiRJkprd29/+dubNm1frMvqFCRMmMHfu3C7t\nY89rP/HoozBrFnz/+7WuRJIkSeqfSr2CtS6jX+jos9xSz6v3vPYTN94Il18O/rckSZIkqT8yvPYT\n994LS5fCc8/VuhJJkiRJ6nmG135g3Tp44AFoaSleJUmSJKm/Mbz2A7/7HYwbB5/4BNx/f62rkSRJ\nkqSeZ3jtB+69Fz74QXjf++x5lSRJktQ39thjD+6+++4+ez/Daz9w331FeD3oIHj6aVi5stYVSZIk\nSVLPMrw2uEy4554ivG67Ley/Pzz0UK2rkiRJktTXFixYwKc+9SnGjBnD6NGjOeecc8hMvve97/H2\nt7+dnXfemTPOOIPXX38dgF/96lfstttumxyjsjf1O9/5Dp/97Gc5/fTTGTlyJAcccAC//e1vATjt\ntNN4/vnnOf744xk5ciQ/+MEPWL16Naeeeio77bQTo0aN4tBDD2Xp0qU9dn6G1wY3bx5s2AB77FH8\n7NBhSZIkqfls2LCBT3ziE+yxxx7MmzePhQsXMnnyZK688kpmzpzJr371K5577jlef/11zj777Lf2\ni2j3kapvufHGG/nc5z7Hq6++yvHHH//WvjNnzmT33Xfnpptu4rXXXuPrX/86M2bM4PXXX2fhwoUs\nW7aMH/3oRwwdOrTHztHw2uDK97uWr7nDDnPSJkmSJKkWInpm2RoPPvggL7zwAhdeeCFDhw5lyJAh\nvP/97+fqq6/mq1/9KhMmTGDYsGGcf/75/PSnP2XDhg1VHfeDH/wgRx99NBHBF77wBR5//PFNfp+Z\nb60PHjyYl19+mWeffZaI4MADD2S77bbbuhNqh+G1wZXDa1m557XiGpIkSZLUBzJ7Ztka8+fPZ8KE\nCQwYsGnEW7RoERMmTHjr5wkTJrB27VqWLFlS1XF33nnnt9aHDRvGqlWrOgy+p512GkcffTSTJ09m\n/PjxTJ06lfXr12/F2bTP8Nrg2obX3XcvXufNq009kiRJkvrebrvtxvPPP79ZsNx1112ZVxEO5s2b\nx+DBgxk7dizDhw9nZcVsr+vXr+/SPapthxwPHDiQb33rWzz55JP8+te/5sYbb2TmzJlbeUabM7w2\nsGXL4Pnn4T3v2dgWUfS+OnRYkiRJah6TJk1il112YerUqaxcuZLVq1fz61//mlNOOYUf/vCHzJ07\nlzfeeINvfvObTJ48mQEDBjBx4kRWrVrFrbfeyrp16/je977HmjVrtvg+lcOEd955Z5577rm3fm5t\nbeWJJ55gw4YNbLfddgwePHiznuDuMLw2sPvvh0MPhUGDNm130iZJkiSpuQwYMIAbb7yROXPmsPvu\nu7Pbbrtx3XXXMWXKFE499VQ+/OEP8853vpNhw4Zx8cUXAzBy5EguueQSpkyZwvjx4xkxYgTjx4/f\n4vtU9rZOnTqV7373u+y444788z//M4sXL+bTn/4022+/Pfvttx8f+chH+MIXvtBj5xjZQDdHRkQ2\nUr29bdq04vE43/72pu333ANf+xo8+GBt6pIkSZL6o4jAPNIzOvosS+3tTltlz2sDu/de+MAHNm8/\n+GB48kl4882+r0mSJEmSeoPhtUGtWgWPPFIMG25r2DDYZx8oPT9YkiRJkhqe4bVBPfww7L03jBjR\n/u+971WSJElSf2J4bVBtH5HT1mGHOeOwJEmSpP6jqvAaEV+JiCci4vGIuDoihkTEqIi4IyKeiYjb\nI2L7iu2nRcSciHg6Io6qaD+odIxnI+KiivYhETGrtM/9EbF7z55m/9NZeC0/Lsf7ySVJkiT1B52G\n14jYFfgycFBmvhsYBJwCTAXuysx3AXcD00rb7wucDOwDHAtcEhvnU74UmJKZE4GJEXF0qX0KsCwz\n9wIuAi7sofPrlzZsgF//uv3Jmsr22APWrYMFC/quLkmSJEnqLdUOGx4IDI+IQcBQYCFwIjCj9PsZ\nwEml9ROAWZm5LjPnAnOASRGxMzAiM2eXtptZsU/lsa4Hjti602kOv/89jBoFu+zS8TYRDh2WJEmS\netKECROICJceWCZMmNDlz39QZxtk5qKI+CfgeWAlcEdm3hURYzNzSWmbxRExprTLOKAyMi0sta0D\nKvsBF5Tay/vMLx1rfUQsj4gdM3NZl8+oCXQ2ZLisPGnTySf3fk2SJElSfzd37txal9DUqhk2vANF\nz+gEYFeKHtjPA23vpuzJuyvbfSitCh0937Ute14lSZIk9Red9rwCRwLPlXtBI+JnwPuBJeXe19KQ\n4BdL2y8EdqvYf3ypraP2yn0WRcRAYGRHva7Tp09/a72lpYWWlpYqTqF/ufdemDat8+0OOQQefxxW\nr4Zttun9uiRJkiSpK1pbW2ltba1q28hOpqONiEnAZcAhwGrgCmA2sDvFJEsXRMR5wKjMnFqasOlq\n4FCK4cB3AntlZkbEA8A5pf1vBi7OzNsi4ixg/8w8KyImAydl5uR2asnO6u3vFi6E97wHli4t7mvt\nzIEHwqWXFr2wkiRJklTPIoLMbDfpVHPP64MRcT3wCLC29PrvwAjguog4E5hHMcMwmflURFwHPFXa\n/qyKxHk2cCWwLXBLZt5War8MuCoi5gAvA5sFVxXuu68YMlxNcIWNj8wxvEqSJElqZJ32vNYTe17h\n3HNh/Hj4xjeq2/6qq+Cmm+CnP+3duiRJkiSpu7bU81rto3JUJ6qdabjMSZskSZIk9QeG13b86U/w\n3/9d6yo29/rr8MwzcNBB1e+z556wcmVxr6wkSZIkNSrDaztuvRU+/3l4881aV7KpBx6Agw/u2szB\nEUXv6wMP9F5dkiRJktTbDK/teOUVWLIErrii1pVsqtrnu7ZVnrRJkiRJkhqV4bUdr7wCf/7ncOGF\nsHZtravZqKv3u5bZ8ypJkiSp0Rle27FsGRx7LLzznXDNNb37Xn/4A3z/+7BixZa3W7sWHnyw6EXt\nqkmT4NFHYc2aratRkiRJkmrN8NqOV16BUaPgf/9vOP98WL++997r4ovhsstg333h+uuhoycBPfYY\n7LFHUVdXjRhRBPHHHuterZIkSZJUK4bXdrzyCuy4I3z0o7DDDvCzn/XO+6xbVzx/9dZbYeZM+Pu/\nh499DJ5+evNtt3bIcJmPzJEkSZLUyAyv7Vi2rOjhjCh6X//xHzvuEe2Ou+4qelP33BMOPxx++1s4\n4QT48IfhG98oHo1T1t3w6qRNkiRJkhqZ4bUd5WHDAJ/4RNFDetttPf8+V19dPJKnbNAgOOcceOIJ\nePll2HvvYpsNG3qm59VJmyRJkiQ1qsje6FLsJRGRfVHv8OGweHFxryjAtdfC//2/cM89RW9sT1ix\nAsaNg2efhTFj2t/mgQfg7LOL91yyBObP3/r327ABdtoJnnoKdt55648jSZIkSb0lIsjMdlOXPa9t\nrFlTLNttt7Ht5JOL8HjPPT33PjfcUAzl7Si4QtFb+uCD8KUvwVe/2r33GzAADj3U3ldJkiRJjcnw\n2kZ5yHBlD+vAgXDeefAP/9Bz7/OTn2w6ZLgjAwfCX/0VfOUr3X9P73uVJEmS1KgMr22UJ2tq67TT\niiG3Dz3U/fdYuhTuuw9OOqn7x+qKQw6Bhx/u2/eUJEmSpJ5geG2jcrKmSkOGwNe/Xsw83F3XXQfH\nHbfp0OS+MG5ccS+vJEmSJDUaw2sb5We8tudLXyp6TJ96qnvv0XaW4b4yZgy8+GLfv68kSZIkdZfh\ntY2Ohg0DDBsG554L55+/9cd/7jn4wx/gqKO2/hhba6edivNbv77v31uSJEmSusPw2kZHw4bLzj4b\nbr21CKFb45pr4DOfgcGDt27/7hg0CHbYoXiGrCRJkiQ1EsNrG8uWdTxsGGD77YvZfy+8sOvHzqzd\nkOEyhw5LkiRJakSG1zY663kF+Ju/KSZdWrSoa8d+5BFYvbp4ZE2tGF4lSZIkNSLDaxtbmrCpbPTo\n4tE5f//3XTt2+dmulc+Q7WuGV0mSJEmNyPDaxpYmbKr0rW/B3XfDv/1bdcddvx5mzartkGEowuvS\npbWtQZIkSZK6qtPwGhETI+KRiPht6fXViDgnIkZFxB0R8UxE3B4R21fsMy0i5kTE0xFxVEX7QRHx\neEQ8GxEXVbQPiYhZpX3uj4jde/5Uq1PNsGGAt70NbrkFvv3tYgKnzvzyl7DLLrD33t2vsTvseZUk\nSZLUiDoNr5n5bGYemJkHAQcDK4CfAVOBuzLzXcDdwDSAiNgXOBnYBzgWuCTirYGylwJTMnMiMDEi\nji61TwGWZeZewEXAVkyH1DOqGTZctuee8P/+XzGE+NFHt7xtrSdqKjO8SpIkSWpEXR02fCTwx8yc\nD5wIzCi1zwBOKq2fAMzKzHWZOReYA0yKiJ2BEZk5u7TdzIp9Ko91PXBEV0+kp1Q7bLjs/e+HSy6B\n44+HBQva3+bNN+HnP4fJk3umxu4wvEqSJElqRF0Nr58Frimtj83MJQCZuRgYU2ofB8yv2GdhqW0c\nUBnvFpTaNtknM9cDyyOiyv7PnpNZ/bDhSp/5DHz5y/Dxj8Nrr23++5tugoMPhl137Zk6u2P0aMOr\nJEmSpMZTdXiNiMEUvar/WWrKNpu0/bk7ajIf75tvwoABMHRo1/f9xjeKR+CcfDKsXbvp7+plyDDY\n8ypJkiSpMQ3qwrbHAg9n5kuln5dExNjMXFIaElyORAuB3Sr2G19q66i9cp9FETEQGJmZy9orYvr0\n6W+tt7S00NLS0oVT2LKuDhmuFAH/+q/F8OGzzy5mIY4ojvnLX8KMGZ0foy8YXiVJkiTVi9bWVlpb\nW6vaNjKr6zCNiGuB2zJzRunnCygmWbogIs4DRmXm1NKETVcDh1IMB74T2CszMyIeAM4BZgM3Axdn\n5m0RcRawf2aeFRGTgZMyc7M7RCMiq613a/zud3DKKfDEE1t/jNdfhw99qDjOeefBv/873Hkn/Od/\ndr5vX8iEbbYphjdvu22tq5EkSZKkjSKCzGx3JG5VPa8RMYxisqa/rGi+ALguIs4E5lHMMExmPhUR\n1wFPAWuBsyoS59nAlcC2wC2ZeVup/TLgqoiYA7wM1GRqo+70vJaNGAE331wMId5jD/jJT+CrX+2Z\n+npCRHHf69KlsNtunW8vSZIkSfWg6p7XetDbPa8//zlcfjnccEP3j/XYY3DkkbBhAyxaVPR21osD\nD4T/+I9iEilJkiRJqhfd7nltFl15xmtn3vMemDULnnmmvoIreN+rJEmSpMZjeK3QE8OGKx1xRLHU\nG8OrJEmSpEbT1ee89mtb84zXRjRmTHHPqyRJkiQ1CsNrhZ4cNlzP7HmVJEmS1GgMrxV6ethwvTK8\nSpIkSWo0htcK9rxKkiRJUn0yvFaw51WSJEmS6pPhtUKzTNg0erThVZIkSVJjMbxWaJZhw+Xwmlnr\nSiRJkiSpOobXkg0bYPly2GGHWlfS+4YPh0GD4PXXa12JJEmSJFXH8Fry+uswbBgMHlzrSvqG971K\nkiRJaiSG15Jmud+1zPAqSZIkqZEYXkuaZabhMsOrJEmSpEZieC1plsmaysaMgaVLa12FJEmSJFXH\n8Fpiz6skSZIk1S/Da4n3vEqSJElS/TK8ljTjsGHDqyRJkqRGYXgtcdiwJEmSJNUvw2uJPa+SJEmS\nVL8MryXNds/r6NGGV0mSJEmNw/Ba0mzDhnfaCV5+Gdavr3UlkiRJktQ5w2tJsw0bHjwYtt++CO2S\nJEmSVO+qCq8RsX1E/GdEPB0RT0bEoRExKiLuiIhnIuL2iNi+YvtpETGntP1RFe0HRcTjEfFsRFxU\n0T4kImaV9rk/Inbv2dPsXLMNGwbve5UkSZLUOKrtef0X4JbM3Ad4D/B7YCpwV2a+C7gbmAYQEfsC\nJwP7AMcCl0RElI5zKTAlMycCEyPi6FL7FGBZZu4FXARc2O0z66JmGzYMhldJkiRJjaPT8BoRI4EP\nZeYVAJm5LjNfBU4EZpQ2mwGcVFo/AZhV2m4uMAeYFBE7AyMyc3Zpu5kV+1Qe63rgiG6dVRetWwcr\nVhTDaJuJ4VWSJElSo6im53UP4KWIuCIifhsR/x4Rw4CxmbkEIDMXA2NK248D5lfsv7DUNg5YUNG+\noNS2yT6ZuR5YHhF9dgfq8uUwciQMaLI7gMeMgaVLa12FJEmSJHWumrg2CDgI+L+ZeRCwgmLIcLbZ\nru3P3RGdb9Jzmm2ypjJ7XiVJkiQ1ikFVbLMAmJ+ZD5V+/i+K8LokIsZm5pLSkOByDFoI7Fax//hS\nW0ftlfssioiBwMjMbHce3OnTp7+13tLSQktLSxWnsGXNOFkTFOH1scdqXYUkSZKkZtXa2kpra2tV\n23YaXkvhdH5ETMzMZynuR32ytJwBXACcDvyitMsNwNUR8UOK4cB7Ag9mZkbEqxExCZgNnAZcXLHP\n6cBvgM9QTADVrsrw2lOacbImsOdVkiRJUm217ZD8zne+0+G21fS8ApxDEUgHA88BXwQGAtdFxJnA\nPIoZhsnMpyLiOuApYC1wVmaWhxSfDVwJbEsxe/FtpfbLgKsiYg7wMjC5yrp6hMOGJUmSJKm+VRVe\nM/Mx4JB2fnVkB9ufD5zfTvvDwAHttK+mFH5roZmHDRteJUmSJDWCJptft30OG5YkSZKk+mZ4pXmH\nDe+wQ/F829Wra12JJEmSJG2Z4ZXm7XmNgNGjfdarJEmSpPpneKV5e17BocOSJEmSGoPhleadsAkM\nr5IkSZIag+GV5h02DIZXSZIkSY3B8IrDhr3nVZIkSVK9M7zisGF7XiVJkiTVu6YPr6tXw5o1MHx4\nrSupDcOrJEmSpEbQ9OG1PGQ4otaV1IbhVZIkSVIjaPrw2syTNYHhVZIkSVJjaPrw2syTNYHhVZIk\nSVJjMLw28WRNAKNHF+E1s9aVSJIkSVLHmj68Nvuw4eHDYcAAeOONWlciSZIkSR1r+vDa7MOGwaHD\nkiRJkuqf4bXJhw2D4VWSJElS/Wv68Nrsw4bB8CpJkiSp/jV9eHXYcBFely6tdRWSJEmS1LGmD6/2\nvNrzKkmSJKn+NX14tefV8CpJkiSp/hlenbDJ8CpJkiSp7jV9eHXYsOFVkiRJUv2rKrxGxNyIeCwi\nHomIB0ttoyLijoh4JiJuj4jtK7afFhFzIuLpiDiqov2giHg8Ip6NiIsq2odExKzSPvdHxO49eZId\nybTnFQyvkiRJkupftT2vG4CWzDwwMyeV2qYCd2Xmu4C7gWkAEbEvcDKwD3AscElERGmfS4EpmTkR\nmBgRR5fapwDLMnMv4CLgwm6eV1VWroRBg2Dbbfvi3eqX4VWSJElSvas2vEY7254IzCitzwBOKq2f\nAMzKzHWZOReYA0yKiJ2BEZk5u7TdzIp9Ko91PXBEV05iazlkuLDTTvDyy7BhQ60rkSRJkqT2VRte\nE7gzImZHxF+U2sZm5hKAzFwMjCm1jwPmV+y7sNQ2DlhQ0b6g1LbJPpm5HlgeEb0+B7AzDRcGD4YR\nI4owL0mSJEn1aFCV230gM1+IiNHAHRHxDEWgrdT25+6IzjfpPu933ag8dHinnWpdiSRJkiRtrqrw\nmpkvlF6XRsTPgUnAkogYm5lLSkOCy3dNLgR2q9h9fKmto/bKfRZFxEBgZGa22w84ffr0t9ZbWlpo\naWmp5hTatWyZPa9l5fC67761rkSSJElSs2htbaW1tbWqbSNzyx2mETEMGJCZb0TEcOAO4DsU96Uu\ny8wLIuI8YFRmTi1N2HQ1cCjFcOA7gb0yMyPiAeAcYDZwM3BxZt4WEWcB+2fmWRExGTgpMye3U0t2\nVm9XXH453HMPXHFFjx2yYX3603DyycUiSZIkSbUQEWRmuyNxq+l5HQv8LCKytP3VmXlHRDwEXBcR\nZwLzKGYYJjOfiojrgKeAtcBZFYnzbOBKYFvglsy8rdR+GXBVRMwBXgY2C669wQmbNhozBpYurXUV\nkiRJktS+TsNrZv4JeG877cuAIzvY53zg/HbaHwYOaKd9NaXw25ecsGkjH5cjSZIkqZ5VO9twv+SE\nTRsZXiVJkiTVs6YOrw4b3sjwKkmSJKmeNXV4ddjwRoZXSZIkSfWs6cOrPa8Fw6skSZKketbU4dXn\nvG5keJUkSZJUz5o6vNrzutEOO8Abb8CaNbWuRJIkSZI217ThdcMGWL68CG2CAQNg9Gif9SpJkiSp\nPjVteH3tNdhuOxjU6ZNum8fo0Q4dliRJklSfmja8OmR4c973KkmSJKleNW149RmvmxszxmHDkiRJ\nkupT04ZXn/G6OXteJUmSJNWrpg6v9rxuyvAqSZIkqV41bXj1Ga+bM7xKkiRJqldNG17ted2c4VWS\nJElSvWra8OqETZszvEqSJEmqV00bXp2waXOGV0mSJEn1qqnDqz2vmyqH18xaVyJJkiRJm2ra8Oqw\n4c0NHw4RsGJFrSuRJEmSpE01bXh12HD7HDosSZIkqR41dXi153Vzo0cbXiVJkiTVn6YNrz7ntX32\nvEqSJEmqR00ZXtetg5UrYcSIWldSf8aMgaVLa12FJEmSJG2q6vAaEQMi4rcRcUPp51ERcUdEPBMR\nt0fE9hXbTouIORHxdEQcVdF+UEQ8HhHPRsRFFe1DImJWaZ/7I2L3njrB9ixfDttvDwOaMrpvmT2v\nkiRJkupRV+LbucBTFT9PBe7KzHcBdwPTACJiX+BkYB/gWOCSiIjSPpcCUzJzIjAxIo4utU8BlmXm\nXsBFwIVbeT5VcchwxwyvkiRJkupRVeE1IsYDxwH/UdF8IjCjtD4DOKm0fgIwKzPXZeZcYA4wKSJ2\nBkZk5uzSdjMr9qk81vXAEV0/leo5WVPHDK+SJEmS6lG1Pa8/BL4BZEXb2MxcApCZi4ExpfZxwPyK\n7RaW2sYBCyraF5TaNtknM9cDyyOi1/pG7Xnt2Jgx8MILta5CkiRJkjbVaXiNiI8DSzLzUSC2sGlu\n4XddtaX36TZ7Xjt28MHw0EPw5pu1rkSSJEmSNhpUxTYfAE6IiOOAocCIiLgKWBwRYzNzSWlIcHmw\n6UJgt4r9x5faOmqv3GdRRAwERmbmsvaKmT59+lvrLS0ttLS0VHEKmzK8duxtb4MDD4S774aPf7zW\n1UiSJEnqz1pbW2ltba1q28isvsM0Ig4HvpaZJ0TEhcDLmXlBRJwHjMrMqaUJm64GDqUYDnwnsFdm\nZkQ8AJwDzAZuBi7OzNsi4ixg/8w8KyImAydl5uR23j+7Um9HvvtdWL0avve9bh+qX/rBD+APf4Af\n/ajWlUiSJElqJhFBZrY7Erc7D4v5PvCxiHiGYoKl7wNk5lPAdRQzE98CnFWROM8GLgOeBeZk5m2l\n9suAnSJiDvA3FDMZ9xp7Xrfs+OPhxhuhB74nkCRJkqQe0aWe11rrqZ7XL34RPvQhOPPMHiiqn5o4\nEa69trgHVpIkSZL6Qm/1vDYsZxvu3AknFL2vkiRJklQPmjK8Omy4c+Whw5IkSZJUD5oyvNrz2rkP\nfADmzoUFCzrdVJIkSZJ6XVOGV3teOzdoEBxzDNx0U60rkSRJkiTDq7bA+14lSZIk1Yumm2141SrY\nfvviNdqdw0plr74Ku+0GL7wAw4fXuhpJkiRJ/Z2zDVco97oaXDu3/fZwyCFw5521rkSSJElSs2va\n8KrqOHRYkiRJUj1ouvDqTMNdc/zxcPPNsGFDrSuRJEmS1MyaLrza89o173gHvO1tMHt2rSuRJEmS\n1MyaLrwuW2Z47arjj4cbbqh1FZIkSZKaWdOF15degtGja11FY/G+V0mSJEm11nTh9cUXYcyYWlfR\nWA49FBYvhnnzal2JJEmSpGZleFWnBg6E446z91WSJElS7TRdeF261PC6NbzvVZIkSVItNV14ted1\n6xx1FDzwALz2Wq0rkSRJktSMmjK8OmFT140YAe9/P9xxR60rkSRJktSMmiq8Ztrz2h0OHZYkSZJU\nK5GZta4uDjMCAAAejklEQVShahGR3an3jTdg7FhYsaIHi2oi8+bBwQfDkiXFJE6SJEmS1JMigsyM\n9n7XVD2v9rp2z4QJMH483H9/rSuRJEmS1GwMr+qS44/3kTmSJEmS+p7hVV3ifa+SJEmSaqHT8BoR\n20TEbyLikYj4XUR8u9Q+KiLuiIhnIuL2iNi+Yp9pETEnIp6OiKMq2g+KiMcj4tmIuKiifUhEzCrt\nc39E7N7TJwqG157wZ38Gy5fDH/5Q60okSZIkNZNOw2tmrgY+kpkHAu8Fjo2IScBU4K7MfBdwNzAN\nICL2BU4G9gGOBS6JiPINt5cCUzJzIjAxIo4utU8BlmXmXsBFwIU9dYKVDK/dN2AAfOITDh2WJEmS\n1LeqGjacmStLq9sAg4AETgRmlNpnACeV1k8AZmXmusycC8wBJkXEzsCIzJxd2m5mxT6Vx7oeOGKr\nzqYTS5caXnvCCSfANdfAhg21rkSSJElSs6gqvEbEgIh4BFgM3FkKoGMzcwlAZi4GyrFwHDC/YveF\npbZxwIKK9gWltk32ycz1wPKI2HGrzmgLXnwRRo/u6aM2n+OOKx6V82//VutKJEmSJDWLanteN5SG\nDY+n6EXdj6L3dZPNerCudp/r010OG+4ZAwfC5ZfDt75VPPtVkiRJknrboK5snJmvRUQrcAywJCLG\nZuaS0pDgF0ubLQR2q9htfKmto/bKfRZFxEBgZGYua6+G6dOnv7Xe0tJCS0tL1fUbXnvOvvvCV74C\nf/VXcOutEL3ydYMkSZKk/qy1tZXW1taqto3MLXeYRsROwNrMfDUihgK3A98HDqeYZOmCiDgPGJWZ\nU0sTNl0NHEoxHPhOYK/MzIh4ADgHmA3cDFycmbdFxFnA/pl5VkRMBk7KzMnt1JKd1bslu+wCDz8M\nu+661YdQhbVrYdIkOPdcOOOMWlcjSZIkqdFFBJnZbtdYNeH1AIrJlAaUlp9m5j+U7km9jqLHdB5w\ncmYuL+0zjWIG4bXAuZl5R6n9YOBKYFvglsw8t9S+DXAVcCDwMjC5NNlT21q2Orxu2ADbbAMrVsCQ\nIVt1CLXj0UfhqKPgsceKLwckSZIkaWt1K7zWk+6E15dfhr32gmXtDkZWd/zt38ITT8DPfubwYUmS\nJElbb0vhtaoJm/oD73ftPd/6Fjz7LFx3Xa0rkSRJktRfGV7VbdtsU8w+fO65xbN0JUmSJKmnNU14\nXbrU8NqbDjsMPv/5IsBKkiRJUk9rmvBqz2vv++534cEH4YYbal2JJEmSpP6mqcLr6NG1rqJ/GzYM\nLrsMzjoLli+vdTWSJEmS+pOmCq/2vPa+ww+HE06Ar32t1pVIkiRJ6k8Mr+pxF1wAd90Fd9xR60ok\nSZIk9ReGV/W4ESPgxz+GT38ajjgCLrwQHnsMGuiRwpIkSZLqjOFVveKoo2DhwmL24Xnz4FOfgl13\nhdNPh2uuKf4efW3Dhr5/T0mSJEk9I7KBusMiIre23h13hDlz4G1v6+GiVLU//hFuv70YTvzLX8Ke\ne8IZZ8CXv9z773377cX7PPUUDBrU++8nSZIkqesigsyMdn/XDOF1zRoYPhxWr4YBTdPXXN/WroX7\n7y/C60UXFZM89ZZXXoF3vxvWr4crryx6hSVJkiTVn6YPr4sWwcEHwwsv9EJR6pZ774XPfAYefRTG\nju2d9zjtNBg5EiZOhIcegpkze+d9JEmSJHXPlsJrUwygXLrU+13r1Qc/CF/8InzpS/CLX0C0e5lu\nvV/8oujhffRReOMN+Lu/gxUrip54SZIkSY2jKQbROllTfZs+HebPh8su69njvvQS/PVfF0OFhw8v\nenbf974i0EqSJElqLE0TXkePrnUV6siQIfCTn8C0afCHP/Tccc8+Gz73OfjABza2nXoqXH11z72H\nJEmSpL7RNOHVntf6tt9+8M1vFvenrlvX/eP99Kfw+OPw3e9u2n7SSXDffbV5VI8kSZKkrWd4Vd04\n5xwYNgwuuKB7x1m8uDjWjBkwdOimvxs+HI4/vgi3kiRJkhqH4VV1Y8CA4v7Uf/kXePjhrTtGJvzV\nX8Ff/AVMmtT+NqeeWgxTliRJktQ4DK+qK+PHF+H11FNh5cqu73/VVfCnPxWzCnfkiCNg3jyYM2fr\n65QkSZLUtwyvqjunnALvfS9Mndq1/RYsgK9/vXiO6zbbdLzdoEEwebITN0mSJEmNxPCqunTJJfCz\nn8Edd1S3fSZMmQJf/nIRfDtTHjqc2b06JUmSJPUNw6vq0qhRcMUVcOaZsGxZ59v/+Mfw8svV99Ye\nfHDRA/ub33SvTkmSJEl9Y1BnG0TEeGAmMBbYAPw4My+OiFHAT4EJwFzg5Mx8tbTPNOBMYB1wbmbe\nUWo/CLgS2Ba4JTP/ptQ+pPQeBwMvAZ/NzOd74gRXrCh614YP74mjqS8deSR8+tNw7LHFo3TWrYP1\n64vXtusPPQS/+hUMHlzdsSM29r4edljvnockSZKk7ovsZNxkROwM7JyZj0bEdsDDwInAF4GXM/PC\niDgPGJWZUyNiX+Bq4BBgPHAXsFdmZkT8Bvj/MnN2RNwC/Etm3h4Rfw0ckJlnRcRngU9m5uR2asnO\n6m1r7lw4/PBigh41nlWrisfarF8PAwcWvaWDBm2+vvvuRcDtiueeK4LrwoXVh15JkiRJvSciyMxo\n73ed9rxm5mJgcWn9jYh4miKUnggcXtpsBtAKTAVOAGZl5jpgbkTMASZFxDxgRGbOLu0zEzgJuL10\nrG+X2q8H/rWrJ9kRhww3tm23hdNP751jv+MdsNdexX21H/9477yHJEmSpJ7RpXteI+LtwHuBB4Cx\nmbkE3gq45Yg4DphfsdvCUts4YEFF+4JS2yb7ZOZ6YHlE7NiV2jpieNWW+MxXSZIkqTFUHV5LQ4av\np7iH9Q2g7fjdnpy3td1u4q1heNWWnHwy3HILvPZarSuRJEmStCWdDhsGiIhBFMH1qsz8Ral5SUSM\nzcwlpftiXyy1LwR2q9h9fKmto/bKfRZFxEBgZGa2O8fs9OnT31pvaWmhpaVli7UbXrUlb3sbtLQU\nj+XpreHJkiRJktrX2tpKa2trVdt2OmETQETMBF7KzK9WtF0ALMvMCzqYsOlQiuHAd7JxwqYHgHOA\n2cDNwMWZeVtEnAXsX5qwaTJwUk9N2PTVr8K4cfC1r3VpNzWR664rHrVz5521rkSSJElqbluasKnT\nYcMR8QHg88BHI+KRiPhtRBwDXAB8LCKeAY4Avg+QmU8B1wFPAbcAZ1UkzrOBy4BngTmZeVup/TJg\np9LkTn9DMfFTj7DnVZ05/vjiUTuLFtW6EkmSJEkdqarntV5sTc/rUUcVva5HH91LRalfOPNM2H//\noqdekiRJUm10q+e10S1das+rOuesw5IkSVJ96/fh1WHDqsbhhxfXypNP1roSSZIkSe3p1+E1s+h5\n3WmnWleiejdwIHzuc3D11bWuRJIkSVJ7+nV4Xb4chg2DbbapdSVqBF/4Alx+Ofz+97WuRJIkSVJb\n/Tq8OmRYXXHAAXDBBcVzX++/v9bVSJIkSapkeJUqnH46XHklnHgi3HBDrauRJEmSVDao1gX0JsOr\ntsYxx8DNNxcBdvFi+Mu/rHVFkiRJkgyvUjsOOQT+53+KILtwIUyfDtHu06YkSZIk9QWHDUsd2HNP\nuO++ohf2L/8S1q2rdUWSJElS8zK8Slswdiy0tsL8+fDJT8LKlbWuSJIkSWpO/Tq8Ll1qeFX3bbcd\n3Hgj7LgjHHEEvPRSrSuSJEmSmk+/Dq8vvgijR9e6CvUHgwcXsxB/5CNFgN2wodYVSZIkSc2l34dX\ne17VUyLgH/6heG1trXU1kiRJUnMxvEpdEAFTpsDll9e6EkmSJKm5RGbWuoaqRURWW++6dTB0KKxa\nBQMH9nJhaiovvwzvfCfMnQs77FDraiRJkqT+IyLIzHYfUtlve15feqmYYMfgqp72trfB0UfDtdfW\nuhJJkiSpefTb8OqQYfWmKVPgsstqXYUkSZLUPAyv0lY44ojiGnvssVpXIkmSJDUHw6u0FQYOhC9+\nEa64otaVSJIkSc3B8CptpTPOgKuvhtWra12JJEmS1P/12/C6dKnhVb1rjz3g3e+GG26odSWSJElS\n/9dvw+uLL8Lo0bWuQv2dEzdJkiRJfaPT8BoRl0XEkoh4vKJtVETcERHPRMTtEbF9xe+mRcSciHg6\nIo6qaD8oIh6PiGcj4qKK9iERMau0z/0RsXtPnJjDhtUXPvlJmD0b5s+vdSWSJElS/1ZNz+sVwNFt\n2qYCd2Xmu4C7gWkAEbEvcDKwD3AscElElB8weykwJTMnAhMjonzMKcCyzNwLuAi4sBvn8xbDq/rC\n0KEweTJceWWtK5EkSZL6t07Da2beC7zSpvlEYEZpfQZwUmn9BGBWZq7LzLnAHGBSROwMjMjM2aXt\nZlbsU3ms64EjtuI8NmN4VV8588xi1uENG2pdiSRJktR/be09r2MycwlAZi4GyjFxHFA5gHJhqW0c\nsKCifUGpbZN9MnM9sDwidtzKut5ieFVfOeggGDkSWltrXYkkSZLUf/XUhE3ZQ8cBiM432bKVK2Ht\nWhgxoifKkbYsouh9vfzyWlciSZIk9V+DtnK/JRExNjOXlIYEv1hqXwjsVrHd+FJbR+2V+yyKiIHA\nyMxc1tEbT58+/a31lpYWWlpaNtum/Jic6HYMlqrz+c/D3/0dLF8OO+xQ62okSZKkxtDa2kprlUMY\nI7PzTtOIeDtwY2YeUPr5AopJli6IiPOAUZk5tTRh09XAoRTDge8E9srMjIgHgHOA2cDNwMWZeVtE\nnAXsn5lnRcRk4KTMnNxBHVlNvbNnw1//NTz0UKebSj3ms5+Flpbi2pMkSZLUdRFBZrbbDVnNo3Ku\nAX5NMUPw8xHxReD7wMci4hmKCZa+D5CZTwHXAU8BtwBnVaTNs4HLgGeBOZl5W6n9MmCniJgD/A3F\nTMbdUu55lfqSQ4clSZKk3lNVz2u9qLbn9cor4Ze/hBkzOt1U6jHr18Mee8BNN8G7313raiRJkqTG\n062e10bkTMOqhYED4Ywz7H2VJEmSeoPhVepBZ5wBV18Nq1fXuhJJkiSpfzG8Sj3oHe8ohgzfcEOt\nK5EkSZL6F8Or1MPOPBMuvbR41rAkSZKknmF4lXrYn/85DBkCBxwAv/gFNNCcaJIkSVLdMrxKPWzo\nULj1VrjoIvjbv4XDD4cHH6x1VZIkSVJj63fhNbMIr6NH17oSNbMIOOYYePRROP10+OQn4ZRT4E9/\nqnVlkiRJUmPqd+H11VeLnq9tt611JVLx+JwpU+DZZ2HffeHP/gy+9jVYtqzWlUmSJEmNpd+F16VL\nHTKs+jN8OHzrW/Dkk7BiBey9N/zwh07qJEmSJFWr34VXhwyrnu28M/zoR9DaWtwXe8ghMHt2rauS\nJEmS6l+/DK/2vKre7bsv3H47fOMbcPzx8JWvwBtv1LoqSZIkqX4ZXqUaiYDPfx6eeAJeeQX22w9u\nvrnWVUmSJEn1yfAq1dhOO8GVV8Lll8O558JnPwuLF9e6KnXVihVw/vkwb16tK5EkSeqfDK9SnTji\nCPjd7+Ad74B3vxv+4z9gw4b2t12/HpYvh/nzYe7c4hFRqp1774X3vAfuuAM+9CF46qlaVyRJktT/\nRDbQv3ojIjur97OfLZ6pOXlyHxUl9YLHH4e/+AtYswZ22AFefx1ee614ff11WLUKttsORowoguyw\nYXDSScW1/773FY/oqdaqVfDgg8Xw5YMOKh7nM2hQ751bf/Lmm8Us0tdcA5deCieeCD/5CXz963DD\nDTBpUq0rlCRJaiwRQWZGe7/rd/9EtedV/cG73w333w+//GURREeMKJaRI4vXYcNgQGncRCY89hj8\n/Odw9tnFkOMTTiiC7Ec/uvkzj5cvh/vuK3oL77kHHnmkmEDqgAOKmZDnz4eWFjjyyGKZOLG4P1eb\nevBBOP304nN7/PFi+DfAqacWXzh84hNFqD3yyNrWWU+efRZ23bX44kWSJKmr+l3P6377wU9/Cvvv\n30dFSXXmueeKIPuznxXDkI8+Gg4/vBjKes89xe8nTYIPfrAY4nrYYZuGicWL4e674a674M47i+Ba\nDrIf/WjxuJ9mtmYN/P3fw49/DBdfXIz2aM///A98+tNFj+ynPtW3NdaTDRuKx0L90z8VIX+HHeDa\na4vHREmSJLW1pZ7XfhdeR4+GJ5+091WCYiTCDTcUvaz771+E1YMOgsGDq9s/s+gtu+uuYmlthW22\nKb4karuMGtWrp1IXHnsMTjsN3v52+Ld/6zzIP/ooHHccfOc78KUv9UmJdWPVKrjqKvjnfy56/7/2\nNTj55OJ6POusYmj117++cQSBJEkSNFF4Xb+++EfSqlVdu+dPUnUyYeHC4gui8vLEE0Wv7siRRYid\nOLHYbuXKjcuKFZv+vGpVEXbHji2WMWM2Xx89uvjvOLPovcvcfD2zCD8DB26+DBpUvEbA0qWwaFGx\nLFy4cb28LF4MQ4ZsOjS78nXkyOL+1v/8T/g//6cIsNUOpZ4zB446Cv7X/4Lzzuvdv089WLoULrmk\n6HE++OAitH7kI5t+XvPmFY+JGjoUZs6EXXapXb2SJKm+NE14ffHF4h/PS5f2YVGSyITnny/C7Jw5\nRXAcNmzTZfjwjetDhhTPtl2ypPjvdsmSTddffLH473j9+iKcRhRL23Uowuz69R0vGzYU96PuuiuM\nG1e8tl0fOxbWrds4KdZrr226/vrrRXg94wzYbbeufz4LFxbDt487Di64oDHuIX7ttWKY76OPFq9r\n1xbDy7fbrvhbltfLy5Ah8F//BdddB5/5DHzlK7DPPh0ff906+N73ih7syy4rPpvuWrq0mPH5ttuK\nIe9jx8LnPldM4DdhQvePL0mSel/ThNcnnijuP3vyyT4sSpKqsGwZfPzjRaA77bTNe4jb9hpvu+3G\nsL/tth0Pr80sjr1oEbzwwsZl0aLii4Btty16sXfaqXhtu7799sW2jz5aTN716KPF8sILxWRU731v\nMYHY0KHwxhvFsmLFxvXKtsMPL4YEd+W2jXvuKSa5+uQni2C/zTbV77tuHTzwQBFWb7+9+OLkIx+B\nY46Bj32smHzs2mvh+uvhXe+CU04phi57W4kkSfWracLr3XfDd79bzNAqSfVmxQr48pfhj3/cvId4\n3bpN11ev3nSYdWWYHTq0WF55pRjyPGxYMfR2112L1/Ky887FcZYuhZdeKl7brq9YATvuCAceWATV\n8rLXXn33yKRly4p7gv/4R5g1C/beu2jPLOor11t+ffHFIrT+93/DHnsUYfXoo4vHRA0Zsvnx16wp\nemKvvRZuugkOPbQIsp/8ZBHeJUlS/WiI8BoRxwAXAQOAyzLzgna22WJ4nTEDbrmlmG1YkvqLDRuK\nAFt53/CbbxbBa5ddiiC7tdauLUJqrYcyZxYzOH/zm8XQ7HJYHTBgY09x5euBBxb3End19uuVK4sA\ne801xRedH/4wHH988WijXXftnXOTJEnVq/vwGhEDgGeBI4BFwGxgcmb+vs12b4XX9euL4cG//vXG\n5eWX4Qc/gClT+voMpM61trbS0tJS6zKkHtFb1/PzzxfBtRxShw3r8bd4y/LlxWN8bryxGHr8zncW\nQfb444ve51oHevUt/zda/YnXsxrZlsJrHw0K69QkYE5mzgOIiFnAicDv2244fXoRVH/zm6LH4X3v\nKx7/cd55xb1kPnZB9cr/I1F/0lvX8+67F0tf2GGHYvjwKacUPdD33Vc8yufkk4ue7nKQnTix82Nl\nbpwgrDyJWNvXbbbZOHv1yJFdu79Xvc//jVZ/4vWs/qpewus4YH7FzwsoAu1m1qyBc86Bww4rvpWX\nJKm7Bg+GlpZi+ad/gmeeKXpkzz+/mC16S8qPbCo/tqntevl1zRp49dViJudXXy3aRo4shn+XA+3Q\nocV9u4MHt/86ZEjRI1z5uKiOHiFV3r7tUj7WgAGb3mvd0Wzd1Sifc3km8Mql3INdDvZtA355gWII\n++DBxWt76+VJzdp+vpXr5RnJKxfY9Of164v7wVet2rj89rfwr/+6sX3t2k1nOW97jhHF+227bfFF\nxDbbtL8+aFDHX2iUXysf+9XRtVT+DCv/NpWv5fWOronyErHpZzt48KZL28+9o6VcU3kAX+VAvq4O\n6utslEPb66pZRkWU/45tr+XeeI/y0oyfsxpLvYTXqv3jP9a6AklSfxZRTBq1997wjW/0zntkFiGp\n/FimcqB9880iNK1Zs/lreSkHkPYeIVVeNmzYdL+VKzc9xpo1xTbtzXZduVTzD9jKsFQOTG2DKmwa\nxtoLaOUJutatK5a1a9tf7yi0VYbhyrBWWWP55wEDinBZuSxYAE8/vfHncugsv2d751ieXK1yWbVq\n0/V169oP3JWv5b9Ze8G+MpR2FNjbHqu9a6K8ZG76ma5du3Gp/Lk8edyWlsovBipf2653dv10pu3n\n396XJOVrqKMAX+0XMZX1b+kLkLZfCpTPpfLnLX350d7fve3S9r2g4+O0/bzXrClupav8nNt7j7bH\nbPs5t3edVfu37egarDyv9j63tp9h28+x7bm39yVN5d+/K/V09N96eb2jL+jaXoednVf5c2/v3Cof\nB1jer731tp9PR9da5X4d1dLRZ1TZ1tEIo8r1tsfZ2vUtqZd7Xg8DpmfmMaWfpwLZdtKmiKh9sZIk\nSZKkXlPvEzYNBJ6hmLDpBeBB4JTMfLqmhUmSJEmS6kJdDBvOzPUR8f8Bd7DxUTkGV0mSJEkSUCc9\nr5IkSZIkbYkPlpG2UkRcFhFLIuLxirZREXFHRDwTEbdHxPYVv5sWEXMi4umIOKqi/aCIeDwino2I\ni/r6PCSAiBgfEXdHxJMR8buIOKfU7jWthhQR20TEbyLikdI1/e1Su9e0GlZEDIiI30bEDaWfvZ7V\nVAyv0ta7Aji6TdtU4K7MfBdwNzANICL2BU4G9gGOBS6JeGs+tUuBKZk5EZgYEW2PKfWFdcBXM3M/\n4H3A2RGxN17TalCZuRr4SGYeCLwXODYiJuE1rcZ2LvBUxc9ez2oqhldpK2XmvcArbZpPBGaU1mcA\nJ5XWTwBmZea6zJwLzAEmRcTOwIjMnF3abmbFPlKfyczFmfloaf0N4GlgPF7TamCZubK0ug3FPB+J\n17QaVESMB44D/qOi2etZTcXwKvWsMZm5BIowAIwptY8D5ldst7DUNg5YUNG+oNQm1UxEvJ2ip+oB\nYKzXtBpVaYjlI8Bi4M7SP9i9ptWofgh8g+JLmDKvZzUVw6vUu5wRTQ0lIrYDrgfOLfXAtr2GvabV\nMDJzQ2nY8HiKXqf98JpWA4qIjwNLSiNk2n3+ZYnXs/o1w6vUs5ZExFiA0tCcF0vtC4HdKrYbX2rr\nqF3qcxExiCK4XpWZvyg1e02r4WXma0ArcAxe02pMHwBOiIjngGuBj0bEVcBir2c1E8Or1D3Bpt+A\n3gCcUVo/HfhFRfvkiBgSEXsAewIPlob4vBoRk0oTKZxWsY/U1y4HnsrMf6lo85pWQ4qIncozr0bE\nUOBjFPdye02r4WTm/87M3TPzHcBk4O7M/AJwI17PaiKDal2A1Kgi4hqg5f9v735CNRvjOIB/v/Jn\n2FiMBRb+pCSlZmEhZGoWUlIyK1kRKUqWYqFYGCUlOzUajY2ZpbqxkFlY3ERkhKIpNrKejUl6LN6j\n+y7cBd177rnm89mc933O77z9Tj319n3POc+b5GDbX5K8nORYktNtn0jyc1Yr/WWM8V3bU1mtEPhH\nkmfG1p8sP5vkRJIDSTbGGB/NeR6QJG3vSfJYkrPTM4IjyYtJXk9yypxmH7ouyXttL8nqx/oPxhgb\nbTdjTvP/cSzmMxeRbs1jAAAAWCa3DQMAALB4wisAAACLJ7wCAACweMIrAAAAiye8AgAAsHjCKwAA\nAIsnvALATNp+9i/rD7f9cLf6AYD9RHgFgJmMMe79L4fteCMAsA8JrwAwk7bnp+3htp+2Pd32+7Yn\n12oemMa+SPLI2vhVbY+33Wz7ZduHpvHn2x6fXt/R9mzbAzOfGgDsOuEVAOazfhX1UJLnktye5Ja2\nd7e9Isk7SR4cY9yZ5Nq1+peSfDLGuCvJkSRvtL0yyVvT8Q8neTfJU2OM32c4FwCYlfAKAHvj8zHG\nr2OMkeTrJDcluS3JuTHGuanm/bX6+5O80ParJGeSXJ7khun4x5OcTHJmjLE5U/8AMKtL97oBALhI\nXVh7/We2vpO7TX2THB1j/PgP+25Ncj7J9TvXHgAsiyuvADCf7YLp335IcmPbm6f3j67t+zir24xX\nH9QemrZXZ3Xr8H1JDrY9unPtAsByCK8AMJ/tVg4eSTLGuJDk6SQb04JNv63VvJrksrbftP02ySvT\n+JtJ3h5j/JTkySSvtb1mV7oHgD3U1aMyAAAAsFyuvAIAALB4wisAAACLJ7wCAACweMIrAAAAiye8\nAgAAsHjCKwAAAIsnvAIAALB4wisAAACL9xemgKFfPIrWjAAAAABJRU5ErkJggg==\n",
+      "text/plain": [
+       "<matplotlib.figure.Figure at 0x7f5991b0cbd0>"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "plot_rdd_hist(cheap_histogram)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 118,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "image/png": "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\nsc8u4LNV9WCSo4HvJ7m9ee+rVfXV9p2TnAJ8CDgFWADckeTkqirgKmB5Vd2X5JYkS6vqNmA5sK2q\nTk7yYeByYFmS2cDngDOBNJ99U1Vt7zvIZGQnbqVWkiRJkjrfkJXaqtpSVQ82288DjwDzm7f7i5Ln\nANdX1a6qWg+sA5YkmQfMrKr7mv1WAee29bm22b4ReFezvRRYXVXbq+oZYDWwryI8GlZqJUmSJKnz\njeie2iQnAacD/9Q0fSrJg0n+MskxTdt84Im2bhubtvnAhrb2DbwSjvf1qardwPYkcwY51qhZqZUk\nSZKkzjec6ccANFOPbwQ+U1XPJ7kS+OOqqiSfB74C/PYYjWuEk4lhxYoV+7Z7enro6ekZdH9DrSRJ\nkiRNTr29vfT29g5r32GF2iTTaQXa66rqJoCqerJtl68DNzfbG4ET2t5b0LQN1N7eZ1OSQ4BZVbUt\nyUagp0+fu/obY3uoHQ6nH0uSJEnS5NS3ULly5coB9x3u9OO/AtZU1Z/ubWjukd3r/cAPm+1v01rk\n6bAki4CfA+6tqi20phUvSRLgPOCmtj7nN9sfBO5stm8D3p3kmGbRqHc3baO2t1JbNRZHkyRJkiRN\nhCErtUneBvwG8HCSHwAF/AHw0SSnA3uA9cAnAapqTZIbgDXAy8AFzcrHABcC1wBHALdU1a1N+9XA\ndUnWAU8By5pjPZ3kMuD+5nNXNgtGjdqhh7ZeL70ERx45FkeUJEmSJB1sqS4oVSapAzmP446Dhx+G\nuXPHYVCSJEmSpDGRhKrqd+2lEa1+3G1cLEqSJEmSOtuUDrUuFiVJkiRJnW1Kh1ortZIkSZLU2Qy1\nhlpJkiRJ6lhTOtQ6/ViSJEmSOtuUDrVWaiVJkiSps03pUGulVpIkSZI625QOtVZqJUmSJKmzGWoN\ntZIkSZLUsaZ0qHX6sSRJkiR1tikdaq3USpIkSVJnm9Kh1kqtJEmSJHW2KR1qrdRKkiRJUmcz1Bpq\nJUmSJKljTelQ6/RjSZIkSepsUzrUWqmVJEmSpM5mqH0OqiZ6JJIkSZKkAzGlQ+3hh0MCO3dO9Egk\nSZIkSQdiSodacAqyJEmSJHWyKR9qXSxKkiRJkjrXlA+1VmolSZIkqXMZag21kiRJktSxpnyodfqx\nJEmSJHWuKR9qrdRKkiRJUuea8qHWSq0kSZIkda4pH2qt1EqSJElS5xoy1CZZkOTOJD9K8nCSi5r2\n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\n",
+      "text/plain": [
+       "<matplotlib.figure.Figure at 0x7f598bd2ab90>"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "plot_rdd_hist(price_rdd.filter(lambda x: x < 30000).histogram(100))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 120,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "\n",
+       "        <iframe\n",
+       "            width=\"960\"\n",
+       "            height=\"500\"\n",
+       "            src=\"http://bl.ocks.org/Jay-Oh-eN/raw/c532c8703547cf148006/d7c0db2150bdde2a56acce2456a5bbe19527a79b/\"\n",
+       "            frameborder=\"0\"\n",
+       "            allowfullscreen\n",
+       "        ></iframe>\n",
+       "        "
+      ],
+      "text/plain": [
+       "<IPython.lib.display.IFrame at 0x7f599016c110>"
+      ]
+     },
+     "execution_count": 120,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "from IPython.display import IFrame\n",
+    "\n",
+    "IFrame('http://bl.ocks.org/Jay-Oh-eN/raw/c532c8703547cf148006/d7c0db2150bdde2a56acce2456a5bbe19527a79b/', width=960, height=500)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 121,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "def spark_histogram(df, column):\n",
+    "    donor_counts = df.groupby(column).count()\n",
+    "    donor_df = donor_counts.toPandas()\n",
+    "    donor_df[column] = donor_df.num_donors.astype(float)\n",
+    "    return donor_df.sort(column).set_index(column).iloc[:50,:].plot(kind='bar', figsize=(14,5))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 122,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "/home/spark/anaconda2/lib/python2.7/site-packages/ipykernel/__main__.py:5: FutureWarning: sort(columns=....) is deprecated, use sort_values(by=.....)\n"
+     ]
+    },
+    {
+     "data": {
+      "text/plain": [
+       "<matplotlib.axes._subplots.AxesSubplot at 0x7f59914382d0>"
+      ]
+     },
+     "execution_count": 122,
+     "metadata": {},
+     "output_type": "execute_result"
+    },
+    {
+     "data": {
+      "image/png": "iVBORw0KGgoAAAANSUhEUgAAA0UAAAFUCAYAAADrkpeiAAAABHNCSVQICAgIfAhkiAAAAAlwSFlz\nAAALEgAACxIB0t1+/AAAIABJREFUeJzt3X24XXV55//3BxAVhQhUcpSHhFGiaK2KGhzr6LFWAatI\nx6rBsUDNNe1VaHG07Qjj/IZkdKoyVqnT4tQplYdqKeJ0RCuIFmKnIwgWaVAQ06GEByW1PEQd1PJw\n//7YK7Bzcs7eO2edZJ+d9X5d17qyzneve93ftbLOPvve37W/O1WFJEmSJHXVbuPugCRJkiSNk0WR\nJEmSpE6zKJIkSZLUaRZFkiRJkjrNokiSJElSp1kUSZIkSeq0oUVRknOSbEqyvq/tzCQ3Jbk+yaeT\n7NP32OlJNjSPv7qv/Ygk65N8O8lZfe17JrmwibkqySF9j53YbH9zkhMW5pAlSZIk6VGjjBR9HDhq\nRtvlwLOr6nnABuB0gCTPAt4EHA4cA5ydJE3MR4HVVbUCWJFkyz5XA/dU1WHAWcCZzb72Bf4T8CLg\nSOCMJEvmdZSSJEmSNIehRVFV/Q1w74y2L1XVw82PVwMHNevHAhdW1YNVdSu9gmllkilg76q6ttnu\nfOC4Zv31wHnN+sXAzzXrRwGXV9XmqrqPXiF29HYenyRJkiQNtBCfKXob8Plm/UDg9r7H7mzaDgTu\n6Gu/o2nbKqaqHgI2J9lvwL4kSZIkacG0KoqSvBt4oKr+bIH6A5Dhm0iSJEnSwthjvoFJTgJew6O3\nu0FvNOfgvp8Patrmau+P+U6S3YF9quqeJHcC0zNirpyjLzXf45AkSZLUHVW1zSDMqCNFoW8EJ8nR\nwO8Ax1bVT/q2uwRY1cwodyjwdOCaqrqL3m1xK5uJF04APtMXc2Kz/kbgimb9C8CrkixpJl14VdM2\n18HNuZxxxhkDHx+2jDO+q7nte/dyT3LfPW/d67vnrXt997x1r++et12z73MZOlKU5JP0Rmz2T3Ib\ncAbwH4A9gS82k8tdXVUnV9WNSS4CbgQeAE6uR7OfApwLPA74fFVd1rSfA1yQZANwN7CqKXLuTfIe\n4GtAAWurN+GCJEmSJC2YoUVRVb1lluaPD9j+fcD7Zmn/W+A5s7T/hN403rPt61x6hZQkSZIk7RC7\nr1mzZtx9aG3t2rVrhh3H8uXLW+UYZ3xXc7eNt++Tl7ttfFdzt42375OXu228fZ+83G3j7fvk5W4b\n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\nAElFTkSuQmCC\n",
+      "text/plain": [
+       "<matplotlib.figure.Figure at 0x7f599016c810>"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "spark_histogram(df_complete, 'num_donors')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 123,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "/home/spark/anaconda2/lib/python2.7/site-packages/ipykernel/__main__.py:5: FutureWarning: sort(columns=....) is deprecated, use sort_values(by=.....)\n"
+     ]
+    },
+    {
+     "data": {
+      "text/plain": [
+       "<matplotlib.axes._subplots.AxesSubplot at 0x7f5984940390>"
+      ]
+     },
+     "execution_count": 123,
+     "metadata": {},
+     "output_type": "execute_result"
+    },
+    {
+     "data": {
+      "image/png": "iVBORw0KGgoAAAANSUhEUgAAA0UAAAFUCAYAAADrkpeiAAAABHNCSVQICAgIfAhkiAAAAAlwSFlz\nAAALEgAACxIB0t1+/AAAIABJREFUeJzt3XucZWV95/vPFxARhRaIdCmXbqK0ovGG2niME1BGgUSB\njBEbR4HYryQjJHg0ybGJc0IzOlE4RoknwcQJkUs0iDg5okFAA2UmIwgGsVEQO0NoaISOcml1vITL\n7/yxVsPu6qrau2tXs2v3+rxfr/XqtZ+1fut51q5Vu+u3n2c9K1WFJEmSJHXVDqNugCRJkiSNkkmR\nJEmSpE4zKZIkSZLUaSZFkiRJkjrNpEiSJElSp5kUSZIkSeq0vklRknOTbEiyZpptv5vkkSR79pSd\nlmRtkluSvLan/OAka5J8J8nZPeU7J7mojbkmyf49205s9781yQnDnaokSZIkbWmQnqKPA0dMLUyy\nL/AaYF1P2UHAccBBwFHAOUnSbv4osLKqlgHLkmw65krgvqo6EDgbOKs91h7AHwIvAw4BTk+yaKvP\nUJIkSZJm0Tcpqqp/BO6fZtOHgd+fUnYMcFFVPVRVtwNrgeVJJoDdqur6dr8LgGN7Ys5v1y8BXt2u\nHwFcWVUbq+oB4ErgyIHOSpIkSZIGNKd7ipIcDdxZVTdN2bQPcGfP67vasn2A9T3l69uyzWKq6mFg\nYzscb6ZjSZIkSdK82WlrA5I8CfgDmqFz20L67yJJkiRJ82OrkyLgmcBS4Bvt/UL7AjckWU7Tm7N/\nz777tmV3AftNU07Ptu8m2RHYvaruS3IXcNiUmKuna1CSmsN5SJIkSeqYqtqiE2bQ4XNpF6rqm1U1\nUVU/X1UH0AyFe3FV/StwKfCmdka5A4BnAddV1T00w+KWt4nUCcBn22NfCpzYrr8RuKpdvwJ4TZJF\n7aQLr2nLZjq5GZfTTz991u39llHGd7Vu2969use57b5v3Wu771v32u771r22+75tn22fSd+eoiSf\npOmx2SvJHcDpVfXx3nykJ2G6OcnFwM3Ag8DJ9VjtpwDnAbsAl1XV5W35ucCFSdYC9wIr2mPdn+S9\nwNfaOs6oZsIFSZIkSZo3fZOiqnpzn+0/P+X1+4H3T7PfPwHPn6b8ZzTTeE937PNoEilJkiRJ2iZ2\nXL169ajbMLQzzjhjdb/zWLp06VB1jDK+q3UPG2/bx6/uYeO7Wvew8bZ9/OoeNt62j1/dw8bb9vGr\ne9h42z69M844g9WrV58xtTyzja0bF0lqezgPSZIkSdtOEmqaiRbmMvucJEmSpMfJ0qVLWbdu3aib\nMVaWLFnC7bffPvD+9hRJkiRJC1jbuzHqZoyVmd6zmXqKBp2SW5IkSZK2SyZFkiRJkjrNpEiSJElS\np5kUSZIkSeo0kyJJkiRpzExMLCXJNlsmJpaO+hRndMABB3DVVVfN6zGdkluSJEkaMxs2rAO23Yx0\nGzZsMUHbds2eIkmSJElztn79et7whjew995787SnPY1TTz2VquJ973sfS5cuZWJigpNOOokf/vCH\nAHz5y19mv/322+wYvb0/Z5xxBm9605s48cQT2X333Xn+85/PDTfcAMAJJ5zAHXfcwetf/3p23313\nPvjBD87LOZgUSZIkSZqTRx55hNe97nUccMABrFu3jrvuuosVK1Zw3nnnccEFF/DlL3+Z2267jR/+\n8Ieccsopj8Yls/dEfe5zn+PNb34zGzdu5PWvf/2jsRdccAH7778/n//85/nBD37A7/3e783LeZgU\nSZIkSZqT6667jrvvvpuzzjqLJz3pSey888684hWv4BOf+ATvete7WLJkCbvuuivvf//7+dSnPsUj\njzwy0HFf+cpXcsQRR5CEt771raxZs2az7fP9MFuTIkmSJElzcuedd7JkyRJ22GHztOK73/0uS5Ys\nefT1kiVLePDBB9mwYcNAx52YmHh0fdddd+WnP/3pwAnVXJgUSZIkSZqT/fbbjzvuuGOLhOUZz3gG\n69ate/T1unXreMITnsDixYt58pOfzI9//ONHtz388MN873vfG7jOfkPv5sKkSJIkSdKcLF++nKc/\n/emsWrWKH//4x/zsZz/jK1/5Cscffzwf/vCHuf322/nRj37Ee97zHlasWMEOO+zAsmXL+OlPf8oX\nvvAFHnroId73vvfxb//2b7PW0ztcbmJigttuu21ez8OkSJIkSRozixcvAbLNlub4/e2www587nOf\nY+3atey///7st99+XHzxxaxcuZK3vOUt/NIv/RLPfOYz2XXXXfnIRz4CwO67784555zDypUr2Xff\nfdltt93Yd999Z62nt3do1apVvPe972XPPffkQx/60EDt7CfzfZPSKCSp7eE8JEmSpKmSzPvEAtu7\nmd6ztnyL8Xf2FEmSJEnqNJMiSZIkSZ1mUiRJkiSp00yKJEmSJHWaSZEkSZKkTjMpkiRJktRpO426\n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\nW4w+m3NSlOQXgX8AbqLJAAr4A+A64GKaHp51wHFV9UAbcxrNjHIP0gy3u7ItfwlwHrALcFlVvaMt\nfyJwIfBi4F5gRTtJw9S2mBRJkiRJmtW8J0ULiUmRJEmSpH5mSormZfY5SZIkSRpXJkWSJEmSOs2k\nSJIkSVKnmRQtMBMTS0ky4zIxsXTUTZQkSZK2K060MP3xtmH8tq1bkiRJ0vScaEGSJEmSpmFSJEmS\nJKnTTIokSZIkdZpJkSRJkqROMymSJEmS1GkmRZIkSZI6zaRIkiRJUqeZFEmSJEnqNJMiSZIkSZ1m\nUiRJkiSp00yKJEmSJHWaSZEkSZKkTjMp2s5MTCwlyYzLxMTSUTdRkiRJWlBSVaNuw9CSVO95JAFm\nO68w23lv2/hR1t0/XpIkSdpeJaGqMrXcniJJkiRJnWZSJEmSJKnTTIokSZIkdZpJkSRJkqROMynS\no5y5TpIkSV3k7HPTH28bxi/c2eecuU6SJEnbM2efkyRJkqRpmBRJkiRJ6jSTIs0b70mSJEnSOPKe\noumPtw3jt997irwnSZIkSQuZ9xRJkiRJ0jRMirRgOPxOkiRJozAWSVGSI5N8O8l3krx71O3RtrFh\nwzqa4XfTL812SZIkaX4t+KQoyQ7AnwJHAM8Djk/ynK07yuSQrRhlfFfr3rr4+e5lmpwcvO75ju9q\n3cPGd7XuYeNt+/jVPWy8bR+/uoeNt+3jV/ew8bZ96y34pAhYDqytqnVV9SBwEXDM1h1icsgmjDK+\nq3VvXfyWvUynszW9TFOTqle96lUjS6q6+EE0H/FdrXvYeNs+fnUPG2/bx6/uYeNt+/jVPWy8bd96\n45AU7QPc2fN6fVsmzZv5TqrOOOOMgROq2WK9l0qSJOlxUFULegHeAHys5/VbgI9M2ad6AQXVs5w+\n5fXm+0+1beNHWffs8Qv7fRvntm/buhcvXjLzjVhQixcv2Saxo45fyG33fete233futf2hfy+TXX6\n6acPvO9Ci+9q3cPG2/aZAVW1Zc6x4J9TlOTlwOqqOrJ9vYrmZM7s2Wdhn4QkSZKkBaGmeU7ROCRF\nOwK3AocDdwPXAcdX1S0jbZgkSZKk7cJOo25AP1X1cJLfBq6kuQfqXBMiSZIkSfNlwfcUSZIkSdK2\nNA6zz0mSJEnSNmNSJEmSJKnTFvw9RXOVZDGPPc/orqraMC51DxM/yrqHjR/ntkuSJGl8bXf3FCV5\n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\n9v8Df9BZU9XK8aEAAAAASUVORK5CYII=\n",
+      "text/plain": [
+       "<matplotlib.figure.Figure at 0x7f599016cf50>"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "spark_histogram(df_expired, 'num_donors')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 124,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "+-----------------------------+-------+-----+---------+-----------+\n",
+      "|school_charter_funding_status|expired| live|completed|reallocated|\n",
+      "+-----------------------------+-------+-----+---------+-----------+\n",
+      "|                        false| 233891|22688|   536250|       7084|\n",
+      "|                         true|  19516| 1871|    56507|       1045|\n",
+      "+-----------------------------+-------+-----+---------+-----------+\n",
+      "\n",
+      "+----------------------------+-------+-----+---------+-----------+\n",
+      "|school_magnet_funding_status|expired| live|completed|reallocated|\n",
+      "+----------------------------+-------+-----+---------+-----------+\n",
+      "|                       false| 232393|22746|   536932|       7336|\n",
+      "|                        true|  21014| 1813|    55825|        793|\n",
+      "+----------------------------+-------+-----+---------+-----------+\n",
+      "\n",
+      "+---------------------------+-------+---------+-----+-----------+\n",
+      "|school_metro_funding_status|expired|completed| live|reallocated|\n",
+      "+---------------------------+-------+---------+-----+-----------+\n",
+      "|                   suburban|  76255|   156035| 7367|       1951|\n",
+      "|                      rural|  29264|    48820| 2851|        609|\n",
+      "|                      urban| 115074|   325716|10953|       4659|\n",
+      "|                       null|  32814|    62186| 3388|        910|\n",
+      "+---------------------------+-------+---------+-----+-----------+\n",
+      "\n",
+      "+----------------------------+-------+-----+---------+-----------+\n",
+      "|poverty_level_funding_status|expired| live|completed|reallocated|\n",
+      "+----------------------------+-------+-----+---------+-----------+\n",
+      "|                 low poverty|   6402|  528|    14430|        213|\n",
+      "|                high poverty|  68465| 6602|   139650|       1777|\n",
+      "|            moderate poverty|  38992| 3397|    75900|        820|\n",
+      "|             highest poverty| 139548|14032|   362777|       5319|\n",
+      "+----------------------------+-------+-----+---------+-----------+\n",
+      "\n",
+      "+--------------------------+----+---------+-----------+-------+\n",
+      "|grade_level_funding_status|live|completed|reallocated|expired|\n",
+      "+--------------------------+----+---------+-----------+-------+\n",
+      "|                      null|   3|       27|          0|     14|\n",
+      "|                Grades 6-8|3958|   100283|       1740|  44144|\n",
+      "|                Grades 3-5|8284|   182132|       2371|  80561|\n",
+      "|             Grades PreK-2|9702|   222742|       2450|  94377|\n",
+      "|               Grades 9-12|2612|    87573|       1568|  34311|\n",
+      "+--------------------------+----+---------+-----------+-------+\n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "# categorical/boolean fields can give valuable facets (crosstabs) \n",
+    "#correlations between columns\n",
+    "df_no_null.crosstab('school_charter', 'funding_status').show()\n",
+    "df_no_null.crosstab('school_magnet', 'funding_status').show()\n",
+    "df_no_null.crosstab('school_metro', 'funding_status').show()\n",
+    "df_no_null.crosstab('poverty_level', 'funding_status').show()\n",
+    "df_no_null.crosstab('grade_level', 'funding_status').show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 125,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "+----------------------------+----+---------+-----------+-------+\n",
+      "|resource_type_funding_status|live|completed|reallocated|expired|\n",
+      "+----------------------------+----+---------+-----------+-------+\n",
+      "|                        null|   0|       30|          0|     19|\n",
+      "|                       Other|3630|    63817|        866|  27373|\n",
+      "|                       Books|4100|   133556|       1701|  39714|\n",
+      "|                    Visitors|  45|     1051|          6|    503|\n",
+      "|                    Supplies|8816|   213331|       2926|  75765|\n",
+      "|                       Trips| 141|     6880|         84|   2319|\n",
+      "|                  Technology|7827|   174092|       2546| 107714|\n",
+      "+----------------------------+----+---------+-----------+-------+\n",
+      "\n",
+      "+--------------------------------+-----+--------+-----+----------+------+--------+----+\n",
+      "|primary_focus_area_resource_type|Trips|Visitors|Other|Technology| Books|Supplies|null|\n",
+      "+--------------------------------+-----+--------+-----+----------+------+--------+----+\n",
+      "|             Literacy & Language| 1439|     291|37545|    124115|141828|   86817|   4|\n",
+      "|                            null|    0|       0|    0|         0|     1|       0|  41|\n",
+      "|                Applied Learning| 1580|     145|10890|     19689|  5318|   25171|   0|\n",
+      "|                  Math & Science| 2812|     424|19079|     86985| 13169|  101743|   4|\n",
+      "|                Music & The Arts| 1282|     531| 9518|     21366|  3267|   42610|   0|\n",
+      "|                 Health & Sports|  270|      59| 5810|      3428|   470|   14875|   0|\n",
+      "|                   Special Needs|  443|      50| 9017|     21634|  4504|   19617|   0|\n",
+      "|                History & Civics| 1598|     105| 3827|     14962| 10514|   10005|   0|\n",
+      "+--------------------------------+-----+--------+-----+----------+------+--------+----+\n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "df_no_null.crosstab('resource_type', 'funding_status').show()\n",
+    "df_no_null.crosstab('primary_focus_area', 'resource_type').show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 126,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.009403501179527844"
+      ]
+     },
+     "execution_count": 126,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df_no_null.stat.corr('total_price_excluding_optional_support', 'num_donors')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 127,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.0006899379835585484"
+      ]
+     },
+     "execution_count": 127,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df_no_null.stat.corr('total_price_excluding_optional_support', 'students_reached')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 128,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.9999961836382021"
+      ]
+     },
+     "execution_count": 128,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df_no_null.stat.corr('total_price_excluding_optional_support', 'total_price_including_optional_support')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 2",
+   "language": "python",
+   "name": "python2"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 2
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython2",
+   "version": "2.7.11"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 0
+}
